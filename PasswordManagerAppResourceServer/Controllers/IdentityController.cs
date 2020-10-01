@@ -61,7 +61,15 @@ namespace PasswordManagerAppResourceServer.Controllers
         [HttpPost]
         [Route("authenticate")]
         public  IActionResult AuthenticateUser([FromBody] UserLoginRequest model)
-        {
+        {   
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
+                });
+            }
+
              var authUser =  _userService.Authenticate(model.Email, model.Password);
 
             if(authUser!=null)
