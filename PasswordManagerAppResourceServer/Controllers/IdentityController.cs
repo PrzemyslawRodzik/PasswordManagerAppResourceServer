@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -18,6 +19,7 @@ using PasswordManagerAppResourceServer.Models;
 using PasswordManagerAppResourceServer.Responses;
 using PasswordManagerAppResourceServer.Results;
 using PasswordManagerAppResourceServer.Routes;
+using PasswordManagerAppResourceServer.Services;
 
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -26,20 +28,24 @@ namespace PasswordManagerAppResourceServer.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class IdentityController : ControllerBase
     {
         //private readonly IUserService _userService;
         private readonly IConfiguration _config;
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IUserService _userService;
+        private readonly IMapper _mapper;
 
-        public AuthController(IConfiguration config,IUnitOfWork unitOfWork)
+        public IdentityController(IConfiguration config,IUnitOfWork unitOfWork,IUserService userService, IMapper mapper)
         {
             
             _config = config;
             _unitOfWork = unitOfWork;
+            _userService = userService;
+            _mapper = mapper;
         }
         [Authorize]
-        // GET: api/<AuthController>
+        // GET: api/<IdentityController>
         [HttpGet]
         [Route("dane")]
         public IEnumerable<string> Get()
@@ -51,39 +57,44 @@ namespace PasswordManagerAppResourceServer.Controllers
 
         
 
-        // POST api/<AuthController>
+        // POST api/<IdentityController>
         [HttpPost]
         [Route("authenticate")]
-        public async Task<IActionResult>  Login([FromBody] UserLoginRequest model)
+        public  IActionResult AuthenticateUser([FromBody] UserLoginRequest model)
         {
-            // var authUser =  _userService.Authenticate(model.Email, model.Password);
+             var authUser =  _userService.Authenticate(model.Email, model.Password);
+
+            if(authUser!=null)
+                return Ok( _mapper.Map<UserDto>(authUser)  );
+            else
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = new string[] {"Incorrect email or password!"}
+                });
             
 
+        }
+        [HttpPost]
+        [Route("token")]
+        public  IActionResult AssignToken([FromBody] UserLoginRequest model)
+        {   
+             var authUser =  _userService.Authenticate(model.Email, model.Password);
+
+            if(authUser!=null)
+                return Ok(GenerateAuthToken(authUser));
+             else
+                return BadRequest(new AuthFailedResponse
+                {
+                    Errors = new string[] {"Incorrect email or password!"}
+                });        
+                
+           
             
-           // AccessToken accessToken = GenerateAuthToken(authUser);
-           // return Ok(accessToken);
-
-           
-           
-           
-            return Ok(new AccessToken{
-                JwtToken="zxczxczxczxczxczxczxczxc.zxczxczxczxczxczxczxczxc.1231dasdasdasda",
-                Expire = DateTime.UtcNow.AddMinutes(55)
-            });
-
-
-
-
-
-
-
-
-
 
         }
 
 
-        [HttpPost("identity/register")]
+        [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] UserRegistrationRequest request)
         {
             if (!ModelState.IsValid)
@@ -120,14 +131,14 @@ namespace PasswordManagerAppResourceServer.Controllers
             });
         }
 
-        // PUT api/<AuthController>/5
+        // PUT api/<IdentityController>/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
         {
             
         }
 
-        // DELETE api/<AuthController>/5
+        // DELETE api/<IdentityController>/5
         [HttpDelete("{id}")]
         public void Delete(int id)
         {

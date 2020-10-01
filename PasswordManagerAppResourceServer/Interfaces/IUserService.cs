@@ -1,14 +1,16 @@
-﻿
-using PasswordManagerAppResourceServer.Models;
+﻿﻿
+using System;
 using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
+using EmailService;
+using PasswordManagerAppResourceServer.Models;
 
-namespace PasswordManagerAppResourceServer.Interfaces
+namespace PasswordManagerAppResourceServer.Services
 {
     public interface IUserService
     {
-       // event EventHandler<Message> EmailSendEvent;
+        event EventHandler<Message> EmailSendEvent;
         User Authenticate(string email, string password);
         int GetAuthUserId();
         

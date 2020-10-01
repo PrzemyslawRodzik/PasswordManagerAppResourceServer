@@ -13,6 +13,7 @@ namespace PasswordManagerAppResourceServer.Profiles
         public UsersProfile()
         {
             CreateMap<User, UserDto>();
+            CreateMap<UserDto, User>();
         }
 
     }

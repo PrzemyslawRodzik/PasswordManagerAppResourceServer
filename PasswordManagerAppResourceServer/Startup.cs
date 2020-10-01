@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using AutoMapper;
+using EmailService;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -25,6 +26,7 @@ using PasswordManagerAppResourceServer.Data;
 using PasswordManagerAppResourceServer.Handlers;
 using PasswordManagerAppResourceServer.Interfaces;
 using PasswordManagerAppResourceServer.Models;
+using PasswordManagerAppResourceServer.Services;
 
 namespace PasswordManagerAppResourceServer
 {
@@ -44,6 +46,13 @@ namespace PasswordManagerAppResourceServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            var emailConfig = Configuration
+                .GetSection("EmailConfiguration")
+                .Get<EmailConfiguration>();
+            services.AddSingleton(emailConfig);
+            services.AddHttpContextAccessor();
+            services.AddDataProtection();
+
 
             services.AddSingleton<RsaSecurityKey>(provider => {
                 // It's required to register the RSA key with depedency injection.
@@ -113,7 +122,8 @@ namespace PasswordManagerAppResourceServer
 			// Scoped services ->
 			
 			services.AddScoped<IUnitOfWork, UnitOfWork>();
-          //  services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IEmailSender, EmailSender>();
 
         }
 

@@ -33,7 +33,7 @@ namespace PasswordManagerAppResourceServer.Dtos
             public string PublicKey { get; set; }
 
 
-            public PersonalInfo PersonalInfo { get; set; }
+            
 
 
           
