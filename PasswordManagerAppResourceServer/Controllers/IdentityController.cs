@@ -5,14 +5,14 @@ using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
+
 using AutoMapper;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authorization;
+using EmailService;
+
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using PasswordManagerAppResourceServer.Dtos;
 using PasswordManagerAppResourceServer.Interfaces;
 using PasswordManagerAppResourceServer.Models;
@@ -30,185 +30,234 @@ namespace PasswordManagerAppResourceServer.Controllers
     [ApiController]
     public class IdentityController : ControllerBase
     {
-        //private readonly IUserService _userService;
+
         private readonly IConfiguration _config;
         private readonly IUnitOfWork _unitOfWork;
         private readonly IUserService _userService;
         private readonly IMapper _mapper;
+        private readonly IEmailSender _emailSender;
 
-        public IdentityController(IConfiguration config,IUnitOfWork unitOfWork,IUserService userService, IMapper mapper)
+        public IdentityController(IConfiguration config, IUnitOfWork unitOfWork, IUserService userService, IMapper mapper, IEmailSender emailSender)
         {
-            
+
             _config = config;
             _unitOfWork = unitOfWork;
             _userService = userService;
+            _userService.EmailSendEvent += UserService_EmailSendEvent;
             _mapper = mapper;
+            _emailSender = emailSender;
         }
-        [Authorize]
-        // GET: api/<IdentityController>
-        [HttpGet]
-        [Route("dane")]
-        public IEnumerable<string> Get()
+
+
+        private void UserService_EmailSendEvent(object sender, Message e)
         {
-            var currentUser = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            var currentEmail = User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress")?.Value;
-            return new string[] { currentUser, currentEmail, _config["JwtSettings:Issuer"], _config["JwtSettings:Audience"]};
+            _emailSender.SendEmailAsync(e);
         }
 
-        
+       
 
-        // POST api/<IdentityController>
+
+
+        // POST api/identity/authenticate
         [HttpPost]
         [Route("authenticate")]
-        public  IActionResult AuthenticateUser([FromBody] UserLoginRequest model)
-        {   
+        public IActionResult AuthenticateUser([FromBody] UserLoginRequest model)
+        {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new AuthFailedResponse
+                return BadRequest(new FailedResponse
                 {
                     Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
                 });
             }
 
-             var authUser =  _userService.Authenticate(model.Email, model.Password);
-
-            if(authUser!=null)
-                return Ok( _mapper.Map<UserDto>(authUser)  );
-            else
-                return BadRequest(new AuthFailedResponse
-                {
-                    Errors = new string[] {"Incorrect email or password!"}
-                });
+            var authUser = _userService.Authenticate(model.Email, model.Password);
             
 
+            if (authUser != null)
+            {
+                if (authUser.TwoFactorAuthorization == 1)
+                    _userService.SendTotpToken(authUser);
+                return Ok(_mapper.Map<UserDto>(authUser));
+            }
+                
+            else
+                return BadRequest(new FailedResponse
+                {
+                    Errors = new string[] { "Incorrect email or password!" }
+                });
+
+
         }
+        // POST api/identity/token
         [HttpPost]
         [Route("token")]
-        public  IActionResult AssignToken([FromBody] UserLoginRequest model)
-        {   
-             var authUser =  _userService.Authenticate(model.Email, model.Password);
+        public IActionResult AssignToken([FromBody] UserLoginRequest model)
+        {
+            var authUser = _userService.Authenticate(model.Email, model.Password);
 
-            if(authUser!=null)
-                return Ok(GenerateAuthToken(authUser));
-             else
-                return BadRequest(new AuthFailedResponse
+            if (authUser != null)
+                return Ok(new AuthResponse
                 {
-                    Errors = new string[] {"Incorrect email or password!"}
-                });        
-                
-           
-            
+                    AccessToken = GenerateAuthToken(authUser),
+                    Success = true
+
+                });
+            else
+                return BadRequest(new AuthResponse
+                {   Success = false,
+                    Errors = new string[] { "Incorrect email or password!" }
+                }) ;
+
+
+
 
         }
 
-
+        // POST api/identity/register
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] UserRegistrationRequest request)
+        public  IActionResult Register([FromBody] UserRegistrationRequest request)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new AuthFailedResponse
+                return BadRequest(new FailedResponse
                 {
                     Errors = ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage))
                 });
             }
-
-            // var authResponse = await _identityService.RegisterAsync(request.Email, request.Password);
-            
-            AuthenticationResult authResponse = new AuthenticationResult
-            {   Token = "123123123zxczxczxczxcz",
-                RefreshToken = "zxczxczxczqweqwe123123",
-                Success = true,
-                Errors = new string[] { "Cos poszlo nie tak!" },
-
-
-            }; 
-
-            if (!authResponse.Success)
+            User newUser;
+            try
+            { newUser = _userService.Create(request.Email, request.Password); }
+            catch (AppException ex)
             {
-                return BadRequest(new AuthFailedResponse
+                return BadRequest(new FailedResponse
                 {
-                    Errors = authResponse.Errors
+                    Errors = new string[]{ ex.Message }
                 });
             }
-
-            return Ok(new AuthSuccessResponse
-            {
-                Token = authResponse.Token,
-                RefreshToken = authResponse.RefreshToken
-            });
-        }
-
-        // PUT api/<IdentityController>/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
-        {
             
+            return Ok(new AuthSuccessRegisterResponse
+            {
+                UserDto = _mapper.Map<UserDto>(newUser),
+                AccessToken = GenerateAuthToken(newUser)
+            });
+
         }
-
-        // DELETE api/<IdentityController>/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
-        {
-        }
-
-
-
+         
+    /*
+        return 
+        AccessToken :
+            JwtToken = tokenJson,
+            Expire = expirationDate
+    */
     private AccessToken GenerateAuthToken(User user)
     {
         var keyBytes = Encoding.UTF8.GetBytes(_config["JwtSettings:SecretEncyptionKey"]);
-            var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);
-            
-            using RSA rsa = RSA.Create();
-            rsa.ImportRSAPrivateKey( // Convert the loaded key from base64 to bytes.
-                source: Convert.FromBase64String(_config["JwtSettings:Asymmetric:PrivateKey"]), // Use the private key to sign tokens
-                bytesRead: out int _); // Discard the out variable 
+        var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);
 
-            var signingCredentials = new SigningCredentials(
-                key: new RsaSecurityKey(rsa),
-                algorithm: SecurityAlgorithms.RsaSha256 // Important to use RSA version of the SHA algo 
-            );
-            var cryptoKey = new EncryptingCredentials(symmetricSecurityKey, SecurityAlgorithms.Aes256KW, SecurityAlgorithms.Aes256CbcHmacSha512);
-            var expirationDate =  DateTime.UtcNow.AddMinutes(user.AuthenticationTime);
-            var tokenDescriptor = new SecurityTokenDescriptor
+        using RSA rsa = RSA.Create();
+        rsa.ImportRSAPrivateKey( // Convert the loaded key from base64 to bytes.
+            source: Convert.FromBase64String(_config["JwtSettings:Asymmetric:PrivateKey"]), // Use the private key to sign tokens
+            bytesRead: out int _); // Discard the out variable 
+
+        var signingCredentials = new SigningCredentials(
+            key: new RsaSecurityKey(rsa),
+            algorithm: SecurityAlgorithms.RsaSha256 // Important to use RSA version of the SHA algo 
+        );
+        var cryptoKey = new EncryptingCredentials(symmetricSecurityKey, SecurityAlgorithms.Aes256KW, SecurityAlgorithms.Aes256CbcHmacSha512);
+        var expirationDate = DateTime.UtcNow.AddMinutes( user.AuthenticationTime!=0 ? user.AuthenticationTime : 5 );
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new List<Claim>
+                        {
+                            new Claim(ClaimTypes.Name,user.Id.ToString()),
+                            new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,user.Id.ToString()),
+                            new Claim(ClaimTypes.Email,user.Email),
+                            new Claim("Admin", user.Admin.ToString()),
+                            new Claim("TwoFactorAuth", user.TwoFactorAuthorization.ToString()),
+                            new Claim("PasswordNotifications", user.PasswordNotifications.ToString()),
+                            new Claim("AuthTime", user.AuthenticationTime.ToString()),
+                            
+
+
+                        }),
+            Expires = expirationDate,
+            Audience = _config["JwtSettings:Audience"],
+            Issuer = _config["JwtSettings:Issuer"],
+            NotBefore = DateTime.UtcNow,
+            IssuedAt = DateTime.UtcNow,
+            SigningCredentials = signingCredentials,
+            EncryptingCredentials = cryptoKey
+        };
+
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        var tokenJson = tokenHandler.WriteToken(token);
+
+        return new AccessToken {
+            JwtToken = tokenJson,
+            Expire = expirationDate
+        };
+    }
+
+    [HttpPost("twofactorlogin")]
+    public IActionResult TwoFactorLogIn([FromBody] TwoFactorLoginRequest model)
+        {
+            
+            var user = _userService.GetById(model.UserId);
+            var verificationStatus = _userService.VerifyTotpToken(user, model.Token);
+            if (verificationStatus != 1)
             {
-                Subject = new ClaimsIdentity(new List<Claim>
+                if (verificationStatus == 0)
                 {
-                    new Claim(ClaimTypes.Name,user.Id.ToString()),
-                    new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,user.Id.ToString()),
-                    new Claim(ClaimTypes.Email,user.Email),
-                    new Claim("Admin", user.Admin.ToString()),
-                    new Claim("TwoFactorAuth", user.TwoFactorAuthorization.ToString()),
-                    new Claim("PasswordNotifications", user.PasswordNotifications.ToString()),
-                    new Claim("AuthTime", user.AuthenticationTime.ToString()),
+
+                    return BadRequest(new 
+                    {
+                        Success = false,
+                        VerificationStatus = 0,
+                        Errors = new string[] {"Wrong code"},
+
+                    });
+
+                }
+                else
+                {
+                    return BadRequest(new
+                    {
+                        Success = false,
+                        VerificationStatus = -1,
+                        Errors = new string[] { "Code expired" }
+
+                    }); 
+                    
+
+                }
+            }
+            else
+            {
+
+                return Ok(new 
+                {
+                    Success = true,
+                    VerificationStatus = 1,
+                    AccessToken = GenerateAuthToken(user)
+                });
 
 
 
-                }),
-                Expires =expirationDate,
-                Audience = _config["JwtSettings:Audience"],
-                Issuer = _config["JwtSettings:Issuer"],
-                NotBefore = DateTime.UtcNow,
-                IssuedAt = DateTime.UtcNow,
-                SigningCredentials = signingCredentials,
-                EncryptingCredentials = cryptoKey
-            };
+            }
 
-            
-            var tokenHandler = new JwtSecurityTokenHandler();
-            var token = tokenHandler.CreateToken(tokenDescriptor);
-            var tokenJson = tokenHandler.WriteToken(token);
-            
-            return new AccessToken{
-                JwtToken = tokenJson,
-                Expire = expirationDate
-            };
-    }
+        }
+
+}
 
 
 
 
-    }
+}
+
+
 
     
-}
+

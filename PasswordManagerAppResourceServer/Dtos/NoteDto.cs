@@ -18,7 +18,7 @@ namespace PasswordManagerAppResourceServer.Dtos
         [Required]
         public string Details { get; set; }
         public int UserId { get; set; }
-        public User User { get; set; }
+        
         
 
        

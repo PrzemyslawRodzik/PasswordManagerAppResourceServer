@@ -48,10 +48,7 @@ namespace PasswordManagerAppResourceServer.Services
 
         }
 
-        private void UserService_EmailSendEvent(object sender, Message e)
-        {
-            _emailSender.SendEmailAsync(e);
-        }
+        
 
         public User Create(string email, string password)
         {   
@@ -85,7 +82,7 @@ namespace PasswordManagerAppResourceServer.Services
 
 
 
-            //EmailSendEvent?.Invoke(this, new Message(new string[] { user.Email }, "Zalozyles konto na PasswordManager.com", "Witamy w PasswordManager web api " + user.Email));
+            EmailSendEvent?.Invoke(this, new Message(new string[] { user.Email }, "Zalozyles konto na PasswordManager.com", "Witamy w PasswordManager web api " + user.Email));
 
             return user;
         }
@@ -260,30 +257,7 @@ namespace PasswordManagerAppResourceServer.Services
                 passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
             }
         }
-        public  bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
-        {
-            if (password == null) throw new ArgumentNullException("password");
-            if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
-            if (storedHash.Length != 64) throw new ArgumentException("Invalid length of password hash (64 bytes expected).", "passwordHash");
-            if (storedSalt.Length != 128) throw new ArgumentException("Invalid length of password salt (128 bytes expected).", "passwordHash");
-
-            using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
-            {
-                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
-                for (int i = 0; i < computedHash.Length; i++)
-                {
-                    if (computedHash[i] != storedHash[i]) return false;
-                }
-            }
-
-            return true;
-        }
-
-
-
-
-
-
+        
         private string GenerateTotpToken(User authUser)
         {   string totpToken;
             string sysKey = "ajskSJ62j%sjs.;'[ah1";
@@ -315,9 +289,55 @@ namespace PasswordManagerAppResourceServer.Services
                 });
             _unitOfWork.SaveChanges();
         }
+        private bool CheckUserGuidDeviceInDb(string GuidDeviceFromCookie, User authUser)
+        {
 
-        
+
+            var GuidDeviceHashFromCookie = dataToSHA256(GuidDeviceFromCookie);
+
+
+            if (_unitOfWork.Context.UserDevices.Any(ud => ud.User == authUser && ud.DeviceGuid == GuidDeviceHashFromCookie))
+                return true;
+            else
+                return false;
+
+        }
+        private string GetUserIpAddress(User user) => _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+
+        private bool CheckPreviousUserIp(User authUser)
+        {
+            string currentIpAddress = GetUserIpAddress(authUser);
+            var ipMatched = _unitOfWork.Context.UserDevices.Any(x => x.User == authUser && x.IpAddress.Equals(currentIpAddress));
+            return ipMatched;
+        }
+        private string dataToSHA256(string data)
+        {
+            SHA256 mysha256 = SHA256.Create();
+            return Convert.ToBase64String(mysha256.ComputeHash(Encoding.UTF8.GetBytes(data)));
+
+        }
+
+
         #endregion
+
+        public bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        {
+            if (password == null) throw new ArgumentNullException("password");
+            if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
+            if (storedHash.Length != 64) throw new ArgumentException("Invalid length of password hash (64 bytes expected).", "passwordHash");
+            if (storedSalt.Length != 128) throw new ArgumentException("Invalid length of password salt (128 bytes expected).", "passwordHash");
+
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
+            {
+                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                for (int i = 0; i < computedHash.Length; i++)
+                {
+                    if (computedHash[i] != storedHash[i]) return false;
+                }
+            }
+
+            return true;
+        }
 
         public bool AddNewDeviceToDb(string newOsHash, User authUser)
         {
@@ -407,7 +427,7 @@ namespace PasswordManagerAppResourceServer.Services
 
 
         } */
-
+        
         public void InformAllUsersAboutOldPasswords()
         {   
             
@@ -458,28 +478,9 @@ namespace PasswordManagerAppResourceServer.Services
 
               //  _emailSender.SendEmailAsync(new Message(new string[] { userEmail },"PasswordManagerApp stare hasła", message));
         }
-        private string GetUserIpAddress(User user) => _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+        
 
-        private bool CheckPreviousUserIp(User authUser)
-        {
-            string currentIpAddress =GetUserIpAddress(authUser);
-            var ipMatched = _unitOfWork.Context.UserDevices.Any(x=>x.User==authUser && x.IpAddress.Equals(currentIpAddress));
-            return ipMatched;
-        }
-
-        private bool CheckUserGuidDeviceInDb(string GuidDeviceFromCookie, User authUser)
-        {
-
-            
-            var GuidDeviceHashFromCookie = dataToSHA256(GuidDeviceFromCookie);
-            
-            
-            if (_unitOfWork.Context.UserDevices.Any(ud => ud.User == authUser && ud.DeviceGuid == GuidDeviceHashFromCookie))
-                return true;
-            else
-                return false;
-
-        }
+       
         public void CreateAndSendAuthorizationToken(int authUserId,string userPassword)
         {
             User authUser = GetById(authUserId);
@@ -558,6 +559,7 @@ namespace PasswordManagerAppResourceServer.Services
             NotMatched,
             Matched,
             Expired,
+            
         }
 
 
@@ -593,12 +595,7 @@ namespace PasswordManagerAppResourceServer.Services
 
         }
 
-        private string dataToSHA256(string data)
-        {
-            SHA256 mysha256 = SHA256.Create();
-            return Convert.ToBase64String(mysha256.ComputeHash(Encoding.UTF8.GetBytes(data)));
-            
-        }
+        
 
         public void UpdatePreferences(UpdatePreferencesWrapper upPreferences, int userId)
         {

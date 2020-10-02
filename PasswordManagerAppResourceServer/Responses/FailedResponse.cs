@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace PasswordManagerAppResourceServer.Responses
 {
-    public class AuthFailedResponse
+    public class FailedResponse
     {
        
             public IEnumerable<string> Errors { get; set; }

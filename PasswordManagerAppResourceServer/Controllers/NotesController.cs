@@ -14,19 +14,27 @@ using PasswordManagerAppResourceServer.Models;
 namespace PasswordManagerAppResourceServer.Controllers
 {   
     // api/notes
-   // [Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class NotesController : ControllerBase
     {
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
+        
 
         public NotesController(IMapper mapper,IUnitOfWork unitOfWork)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            
         }
+
+        private int GetUserIdFromJwtToken()
+        {
+            return Int32.Parse(HttpContext.User.Identity.Name);
+        }
+
         // GET: api/notes
         [HttpGet]
         public ActionResult<IEnumerable<NoteDto>> GetAllNotes([FromQuery]int? userId)
@@ -52,12 +60,14 @@ namespace PasswordManagerAppResourceServer.Controllers
             
         }
         
-     
 
 
 
 
-        
+
+
+
+
 
         // GET api/notes/5
         [HttpGet("{id}",Name="GetNoteById")]
@@ -79,6 +89,7 @@ namespace PasswordManagerAppResourceServer.Controllers
         public ActionResult<NoteDto> CreateNote([FromBody] NoteDto noteDto)
         {
             var note = _mapper.Map<Note>(noteDto);
+            note.User = _unitOfWork.Users.Find<User>(Int32.Parse(HttpContext.User.Identity.Name));
             
             _unitOfWork.Context.Notes.Add(note);
             _unitOfWork.SaveChanges();
@@ -96,6 +107,7 @@ namespace PasswordManagerAppResourceServer.Controllers
             var noteFromDb = _unitOfWork.Context.Notes.Find(id);
             if(noteFromDb is null)
                 return NotFound();
+            
 
 
 
@@ -110,7 +122,10 @@ namespace PasswordManagerAppResourceServer.Controllers
         [HttpDelete("{id}")]
         public ActionResult DeleteNote(int id)
         {
+
             var note = _unitOfWork.Context.Notes.Find(id);
+            if (note.UserId != GetUserIdFromJwtToken())
+                return BadRequest();
             if(note is null)
                 return NotFound();
             _unitOfWork.Context.Notes.Remove(note);
