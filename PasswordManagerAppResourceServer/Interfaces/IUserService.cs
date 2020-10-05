@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using EmailService;
+using PasswordManagerAppResourceServer.Dtos;
 using PasswordManagerAppResourceServer.Models;
 
 namespace PasswordManagerAppResourceServer.Services
@@ -15,7 +16,8 @@ namespace PasswordManagerAppResourceServer.Services
         int GetAuthUserId();
         
 
-        ClaimsIdentity GetClaimIdentity(User authUser);
+        
+        AccessToken GenerateAuthToken(User authUser);
         User Create(string email, string password);
         void Update(User user, string password= null);
          bool ChangeMasterPassword(string password,string authUserId);

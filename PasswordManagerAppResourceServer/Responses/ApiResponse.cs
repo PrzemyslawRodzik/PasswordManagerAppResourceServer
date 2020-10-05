@@ -8,6 +8,6 @@ namespace PasswordManagerAppResourceServer.Responses
     public class ApiResponse
     {
         public bool Success { get; set; }
-        public IEnumerable<string> Errors { get; set; }
+        public IEnumerable<string> Messages { get; set; }
     }
 }

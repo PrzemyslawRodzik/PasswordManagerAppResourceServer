@@ -20,7 +20,13 @@ using EmailService;
 using PasswordManagerAppResourceServer.Controllers;
 using PasswordManagerAppResourceServer.Results;
 using PasswordManagerAppResourceServer.Handlers;
-
+using Microsoft.AspNetCore.Authentication;
+using System.ComponentModel;
+using Microsoft.IdentityModel.Tokens;
+using PasswordManagerAppResourceServer.Dtos;
+using System.IdentityModel.Tokens.Jwt;
+using AutoMapper.Configuration;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace PasswordManagerAppResourceServer.Services
 {
@@ -33,18 +39,21 @@ namespace PasswordManagerAppResourceServer.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         
         public DataProtectionHelper dataProtectionHelper;
+        
+        private readonly IConfiguration _config;
         private readonly IEmailSender _emailSender;
         
 
         public event EventHandler<Message> EmailSendEvent;
 
 
-        public UserService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IDataProtectionProvider provider,IEmailSender emailSender)
+        public UserService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IDataProtectionProvider provider,IEmailSender emailSender, IConfiguration config)
         {
             _unitOfWork = unitOfWork;
             _httpContextAccessor = httpContextAccessor;  
              _emailSender = emailSender;
             dataProtectionHelper = new DataProtectionHelper(provider);
+            _config = config;
 
         }
 
@@ -142,37 +151,6 @@ namespace PasswordManagerAppResourceServer.Services
 
             return user;
         }
-
-
-
-        public ClaimsIdentity GetClaimIdentity(User authUser)
-        {
-
-
-
-           // ManageAuthorizedDevices(authUser);  // zapisywać w bazie dodatkowo wcześniejsze adresy ip ?
-
-
-            var claims = new List<Claim>
-{           new Claim(ClaimTypes.Name,authUser.Id.ToString()),
-            new Claim(ClaimTypes.Email,authUser.Email),
-            new Claim("Admin", authUser.Admin.ToString()),
-            new Claim("TwoFactorAuth", authUser.TwoFactorAuthorization.ToString()),
-            new Claim("PasswordNotifications", authUser.PasswordNotifications.ToString()),
-            new Claim("AuthTime", authUser.AuthenticationTime.ToString()),
-
-
-
-        };
-            return new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-
-        }
-
-
-
-
-
-
 
         public IEnumerable<User> GetAll()
         {
@@ -595,19 +573,75 @@ namespace PasswordManagerAppResourceServer.Services
 
         }
 
-        
+        public AccessToken GenerateAuthToken(User user)
+        {
+            var keyBytes = Encoding.UTF8.GetBytes(_config["JwtSettings:SecretEncyptionKey"]);
+            var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);
+
+            using RSA rsa = RSA.Create();
+            rsa.ImportRSAPrivateKey( // Convert the loaded key from base64 to bytes.
+                source: Convert.FromBase64String(_config["JwtSettings:Asymmetric:PrivateKey"]), // Use the private key to sign tokens
+                bytesRead: out int _); // Discard the out variable 
+
+            var signingCredentials = new SigningCredentials(
+                key: new RsaSecurityKey(rsa),
+                algorithm: SecurityAlgorithms.RsaSha256 // Important to use RSA version of the SHA algo 
+            );
+            var cryptoKey = new EncryptingCredentials(symmetricSecurityKey, SecurityAlgorithms.Aes256KW, SecurityAlgorithms.Aes256CbcHmacSha512);
+            var expirationDate = DateTime.UtcNow.AddMinutes(user.AuthenticationTime != 0 ? user.AuthenticationTime : 5);
+            var tokenDescriptor = new SecurityTokenDescriptor
+            {
+                Subject = new ClaimsIdentity(new List<Claim>
+                        {
+                            new Claim(ClaimTypes.Name,user.Id.ToString()),
+                            new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,user.Id.ToString()),
+                            new Claim(ClaimTypes.Email,user.Email),
+                            new Claim("Admin", user.Admin.ToString()),
+                            new Claim("TwoFactorAuth", user.TwoFactorAuthorization.ToString()),
+                            new Claim("PasswordNotifications", user.PasswordNotifications.ToString()),
+                            new Claim("AuthTime", user.AuthenticationTime.ToString()),
+
+
+
+                        }),
+                Expires = expirationDate,
+                Audience = _config["JwtSettings:Audience"],
+                Issuer = _config["JwtSettings:Issuer"],
+                NotBefore = DateTime.UtcNow,
+                IssuedAt = DateTime.UtcNow,
+                SigningCredentials = signingCredentials,
+                EncryptingCredentials = cryptoKey
+            };
+
+
+            var tokenHandler = new JwtSecurityTokenHandler();
+            var token = tokenHandler.CreateToken(tokenDescriptor);
+            var tokenJson = tokenHandler.WriteToken(token);
+
+            return new AccessToken
+            {
+                JwtToken = tokenJson,
+                Expire = expirationDate
+            };
+        }
+
+
 
         public void UpdatePreferences(UpdatePreferencesWrapper upPreferences, int userId)
         {
-            var aa = upPreferences.TwoFactor;
-            var bb = upPreferences.PassNotifications;
-            var cc = upPreferences.VerificationTime;
+            
             User user = _unitOfWork.Users.Find<User>(userId);
             user.AuthenticationTime = Int32.Parse(upPreferences.VerificationTime);
             user.PasswordNotifications = Int32.Parse(upPreferences.PassNotifications);
             user.TwoFactorAuthorization = Int32.Parse(upPreferences.TwoFactor);
             _unitOfWork.Users.Update<User>(user);
             _unitOfWork.SaveChanges();
+            
+
+
         }
+
+
+       
     }
 }

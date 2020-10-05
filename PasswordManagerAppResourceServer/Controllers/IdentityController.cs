@@ -99,14 +99,14 @@ namespace PasswordManagerAppResourceServer.Controllers
             if (authUser != null)
                 return Ok(new AuthResponse
                 {
-                    AccessToken = GenerateAuthToken(authUser),
+                    AccessToken = _userService.GenerateAuthToken(authUser),
                     Success = true
 
                 });
             else
                 return BadRequest(new AuthResponse
                 {   Success = false,
-                    Errors = new string[] { "Incorrect email or password!" }
+                    Messages = new string[] { "Incorrect email or password!" }
                 }) ;
 
 
@@ -139,7 +139,7 @@ namespace PasswordManagerAppResourceServer.Controllers
             return Ok(new AuthSuccessRegisterResponse
             {
                 UserDto = _mapper.Map<UserDto>(newUser),
-                AccessToken = GenerateAuthToken(newUser)
+                AccessToken = _userService.GenerateAuthToken(newUser)
             });
 
         }
@@ -150,56 +150,7 @@ namespace PasswordManagerAppResourceServer.Controllers
             JwtToken = tokenJson,
             Expire = expirationDate
     */
-    private AccessToken GenerateAuthToken(User user)
-    {
-        var keyBytes = Encoding.UTF8.GetBytes(_config["JwtSettings:SecretEncyptionKey"]);
-        var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);
-
-        using RSA rsa = RSA.Create();
-        rsa.ImportRSAPrivateKey( // Convert the loaded key from base64 to bytes.
-            source: Convert.FromBase64String(_config["JwtSettings:Asymmetric:PrivateKey"]), // Use the private key to sign tokens
-            bytesRead: out int _); // Discard the out variable 
-
-        var signingCredentials = new SigningCredentials(
-            key: new RsaSecurityKey(rsa),
-            algorithm: SecurityAlgorithms.RsaSha256 // Important to use RSA version of the SHA algo 
-        );
-        var cryptoKey = new EncryptingCredentials(symmetricSecurityKey, SecurityAlgorithms.Aes256KW, SecurityAlgorithms.Aes256CbcHmacSha512);
-        var expirationDate = DateTime.UtcNow.AddMinutes( user.AuthenticationTime!=0 ? user.AuthenticationTime : 5 );
-        var tokenDescriptor = new SecurityTokenDescriptor
-        {
-            Subject = new ClaimsIdentity(new List<Claim>
-                        {
-                            new Claim(ClaimTypes.Name,user.Id.ToString()),
-                            new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,user.Id.ToString()),
-                            new Claim(ClaimTypes.Email,user.Email),
-                            new Claim("Admin", user.Admin.ToString()),
-                            new Claim("TwoFactorAuth", user.TwoFactorAuthorization.ToString()),
-                            new Claim("PasswordNotifications", user.PasswordNotifications.ToString()),
-                            new Claim("AuthTime", user.AuthenticationTime.ToString()),
-                            
-
-
-                        }),
-            Expires = expirationDate,
-            Audience = _config["JwtSettings:Audience"],
-            Issuer = _config["JwtSettings:Issuer"],
-            NotBefore = DateTime.UtcNow,
-            IssuedAt = DateTime.UtcNow,
-            SigningCredentials = signingCredentials,
-            EncryptingCredentials = cryptoKey
-        };
-
-
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var token = tokenHandler.CreateToken(tokenDescriptor);
-        var tokenJson = tokenHandler.WriteToken(token);
-
-        return new AccessToken {
-            JwtToken = tokenJson,
-            Expire = expirationDate
-        };
-    }
+    
 
     [HttpPost("twofactorlogin")]
     public IActionResult TwoFactorLogIn([FromBody] TwoFactorLoginRequest model)
@@ -241,13 +192,37 @@ namespace PasswordManagerAppResourceServer.Controllers
                 {
                     Success = true,
                     VerificationStatus = 1,
-                    AccessToken = GenerateAuthToken(user)
+                    AccessToken = _userService.GenerateAuthToken(user)
                 });
 
 
 
             }
 
+        }
+    [HttpPost("resendtotp")]
+    public IActionResult ResendTotp([FromBody]int idUser)
+        {
+            try
+            {
+                var user = _userService.GetById(idUser);
+                _userService.SendTotpToken(user);
+
+            }
+            catch(Exception)
+            {
+                return BadRequest(new ApiResponse {
+                    Success = false,
+                    Messages = new string[] { "There was an error sending email. Try again later or contact support." }
+                    });
+
+            }
+            return Ok(new ApiResponse
+            {
+                Success = true,
+                
+                    });
+            
         }
 
 }

@@ -13,9 +13,15 @@ namespace PasswordManagerAppResourceServer.Models
             PassNotifications = pNot;
             VerificationTime = verTime;
         }
-        
-        
-    
+        public UpdatePreferencesWrapper()
+        {
+            TwoFactor = null;
+            PassNotifications = null;
+            VerificationTime = "0";
+        }
+
+
+
         public string VerificationTime { get; set; }
         private string _twoFactor;
         private string _passNotifications;
