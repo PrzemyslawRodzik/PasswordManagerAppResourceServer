@@ -32,7 +32,17 @@ namespace PasswordManagerAppResourceServer.Controllers
 
         private int GetUserIdFromJwtToken()
         {
-            return Int32.Parse(HttpContext.User.Identity.Name);
+            int id = -1;
+            try
+            {
+                id = Int32.Parse(HttpContext.User.Identity.Name);
+                return id;
+            }
+            catch (Exception)
+            {
+                return id;
+            }
+
         }
 
         // GET: api/notes
@@ -89,7 +99,7 @@ namespace PasswordManagerAppResourceServer.Controllers
         public ActionResult<NoteDto> CreateNote([FromBody] NoteDto noteDto)
         {
             var note = _mapper.Map<Note>(noteDto);
-            note.User = _unitOfWork.Users.Find<User>(Int32.Parse(HttpContext.User.Identity.Name));
+            note.User = _unitOfWork.Users.Find<User>(GetUserIdFromJwtToken());
             
             _unitOfWork.Context.Notes.Add(note);
             _unitOfWork.SaveChanges();

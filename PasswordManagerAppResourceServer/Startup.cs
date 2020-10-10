@@ -22,6 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using PasswordManagerAppResourceServer.CustomExceptions;
 using PasswordManagerAppResourceServer.Data;
 using PasswordManagerAppResourceServer.Handlers;
 using PasswordManagerAppResourceServer.Interfaces;
@@ -38,11 +39,8 @@ namespace PasswordManagerAppResourceServer
            
         }
         
-     
-
         public IConfiguration Configuration { get; }
         
-
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
@@ -68,7 +66,7 @@ namespace PasswordManagerAppResourceServer
             });
 
             SecurityKey rsa = services.BuildServiceProvider().GetRequiredService<RsaSecurityKey>();
-            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("JwtSettings:SecretEncyptionKey").Value));
+            var symmetricSecurityKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes(Configuration.GetSection("JwtSettings:SecretEncryptionKey").Value));
             var tokenValidationParameters = new TokenValidationParameters
             {
 
@@ -93,25 +91,12 @@ namespace PasswordManagerAppResourceServer
                    config.TokenValidationParameters = tokenValidationParameters;
                     
 
-                }); 
-            
-         
-                  /*  options.Events.OnValidatePrincipal = async (context) =>
-                    {
-                // This refreshes the token everytime a validated request comes in.
-                // This assumes sliding expiration token.
-                var now = DateTime.UtcNow;
-                        var claims = context.Principal.Claims.Where(claim => claim.Type != JwtRegisteredClaimNames.Jti && claim.Type != JwtRegisteredClaimNames.Iat && claim.Type != JwtRegisteredClaimNames.Aud).ToList();
-                        claims.Add(new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()));
-                        claims.Add(new Claim(JwtRegisteredClaimNames.Iat, new DateTimeOffset(now).ToUniversalTime().ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64));
-                        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                        var principal = new ClaimsPrincipal(identity);
-                // We use the static extension methods because of name clash
-                await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignOutAsync(context.HttpContext);
-                        await Microsoft.AspNetCore.Authentication.AuthenticationHttpContextExtensions.SignInAsync(context.HttpContext, CookieAuthenticationDefaults.AuthenticationScheme, principal);
-                    };
-                }); */
-          
+                });
+
+            services.AddCors(c =>
+            {
+                c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin());
+            });
 
             services.AddControllers();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
@@ -134,7 +119,8 @@ namespace PasswordManagerAppResourceServer
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            app.UseMiddleware<ExceptionMiddleware>();
+            app.UseCors(options => options.AllowAnyOrigin());
             app.UseHttpsRedirection();
 
             app.UseRouting();

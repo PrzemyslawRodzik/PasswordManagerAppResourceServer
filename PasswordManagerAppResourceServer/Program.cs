@@ -21,6 +21,7 @@ namespace PasswordManagerAppResourceServer
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
+/* -> potem do usuniecia !!! */     webBuilder.UseUrls("http://*:5005", "https://*:5006");   /* -> potem do usuniecia !!! */
                 });
     }
 }

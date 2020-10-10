@@ -27,6 +27,7 @@ using PasswordManagerAppResourceServer.Dtos;
 using System.IdentityModel.Tokens.Jwt;
 using AutoMapper.Configuration;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
+using PasswordManagerAppResourceServer.CustomExceptions;
 
 namespace PasswordManagerAppResourceServer.Services
 {
@@ -44,7 +45,7 @@ namespace PasswordManagerAppResourceServer.Services
         private readonly IEmailSender _emailSender;
         
 
-        public event EventHandler<Message> EmailSendEvent;
+        
 
 
         public UserService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IDataProtectionProvider provider,IEmailSender emailSender, IConfiguration config)
@@ -61,37 +62,33 @@ namespace PasswordManagerAppResourceServer.Services
 
         public User Create(string email, string password)
         {   
-            // validation
             if (string.IsNullOrWhiteSpace(password))
-                throw new AppException("Password is required");
+                throw new AuthenticationException("Password is required");
 
             if (VerifyEmail(email))
-                throw new AppException("Email \"" + email + "\" is already taken");
+                throw new AuthenticationException("Email \"" + email + "\" is already taken");
 
             byte[] passwordHash, passwordSalt;
             CreatePasswordHash(password, out passwordHash, out passwordSalt);
             var (publicKey, privateKey) = AsymmetricEncryptionHelper.GenerateKeys(password,keyLength:2048);
 
-            User user = new User();
-            user.Email = email;
-            user.Password = Convert.ToBase64String(passwordHash);
-            user.PasswordSalt = Convert.ToBase64String(passwordSalt);
-            user.TwoFactorAuthorization = 0;
-            user.PasswordNotifications = 1;
-            user.AuthenticationTime = 5;
-            user.Admin = 0;
-            user.PrivateKey = privateKey;
-            user.PublicKey = publicKey;
-
+            User user = new User
+            {
+                Email = email,
+                Password = Convert.ToBase64String(passwordHash),
+                PasswordSalt = Convert.ToBase64String(passwordSalt),
+                TwoFactorAuthorization = 0,
+                PasswordNotifications = 1,
+                AuthenticationTime = 5,
+                Admin = 0,
+                PrivateKey = privateKey,
+                PublicKey = publicKey
+            };
 
             _unitOfWork.Users.Add<User>(user);
-             _unitOfWork.SaveChanges();
+            _unitOfWork.SaveChanges();
 
-
-
-
-
-            EmailSendEvent?.Invoke(this, new Message(new string[] { user.Email }, "Zalozyles konto na PasswordManager.com", "Witamy w PasswordManager web api " + user.Email));
+            _emailSender.SendEmailAsync(new Message(new string[] { user.Email }, "Welcome to PasswordManagerApp.com!", "Welcome to PasswordManagerApp.com " + user.Email + " Your account was successfully created."));
 
             return user;
         }
@@ -136,18 +133,11 @@ namespace PasswordManagerAppResourceServer.Services
 
             var user = _unitOfWork.Users.SingleOrDefault<User>(x => x.Email == email);
 
-
-            // check if user exists
             if (user == null)
                 return null;
 
-            // check if password is correct
             if (!VerifyPasswordHash(password, Convert.FromBase64String(user.Password), Convert.FromBase64String(user.PasswordSalt)))
                 return null;
-
-            // authentication successful
-
-
 
             return user;
         }
@@ -206,13 +196,12 @@ namespace PasswordManagerAppResourceServer.Services
             {
                 _unitOfWork.Users.Update<User>(user);
                 _unitOfWork.SaveChanges();
-                EmailSendEvent?.Invoke(this, 
-                new Message(new string[] { user.Email },"PasswordManagerApp Password Change", "Your password has been changed  "+ DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd' 'HH:mm:ss") + ".")
-                );
+                _emailSender.SendEmailAsync(new Message(new string[] { user.Email }, "PasswordManagerApp Password Change", "Your password has been changed  " + DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd' 'HH:mm:ss") + "."));
                 return true;
-            }catch(Exception)
+            }
+            catch(Exception)
             {
-                return false;
+                throw new UserServiceException("There was an during password change. Contact support or try again later.");
             }
             
 
@@ -238,7 +227,7 @@ namespace PasswordManagerAppResourceServer.Services
         
         private string GenerateTotpToken(User authUser)
         {   string totpToken;
-            string sysKey = "ajskSJ62j%sjs.;'[ah1";
+            string sysKey = _config["TotpKey"];
             var key_b = Encoding.UTF8.GetBytes(sysKey + authUser.Email);
 
 
@@ -267,27 +256,23 @@ namespace PasswordManagerAppResourceServer.Services
                 });
             _unitOfWork.SaveChanges();
         }
-        private bool CheckUserGuidDeviceInDb(string GuidDeviceFromCookie, User authUser)
+        public bool CheckUserGuidDeviceInDb(string GuidDeviceHashFromCookie, int userId)
         {
-
-
-            var GuidDeviceHashFromCookie = dataToSHA256(GuidDeviceFromCookie);
-
-
-            if (_unitOfWork.Context.UserDevices.Any(ud => ud.User == authUser && ud.DeviceGuid == GuidDeviceHashFromCookie))
+            
+            if (_unitOfWork.Context.UserDevices.Any(ud => ud.UserId == userId && ud.DeviceGuid == GuidDeviceHashFromCookie))
                 return true;
             else
                 return false;
 
         }
-        private string GetUserIpAddress(User user) => _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+        private string GetUserIpAddress() => _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
-        private bool CheckPreviousUserIp(User authUser)
-        {
-            string currentIpAddress = GetUserIpAddress(authUser);
-            var ipMatched = _unitOfWork.Context.UserDevices.Any(x => x.User == authUser && x.IpAddress.Equals(currentIpAddress));
-            return ipMatched;
-        }
+        public bool CheckPreviousUserIp(int userId, string ipAddress) => _unitOfWork.Context.UserDevices.Any(x => x.UserId == userId && x.IpAddress.Equals(ipAddress));
+        
+            
+           
+            
+        
         private string dataToSHA256(string data)
         {
             SHA256 mysha256 = SHA256.Create();
@@ -317,22 +302,19 @@ namespace PasswordManagerAppResourceServer.Services
             return true;
         }
 
-        public bool AddNewDeviceToDb(string newOsHash, User authUser)
+        public bool AddNewDeviceToDb(string newOsHash, int userId, string ipAddress)
         {
-
-
-
-            if (!_unitOfWork.Context.UserDevices.Any(b => b.User == authUser && b.DeviceGuid == newOsHash))
-
+            
+            if (!_unitOfWork.Context.UserDevices.Any(b => b.UserId == userId && b.DeviceGuid == newOsHash))
             {
 
-                UserDevice usd = new UserDevice();
-                usd.User = authUser;
-                usd.Authorized = 1;
-                usd.DeviceGuid = newOsHash;
-                usd.IpAddress = GetUserIpAddress(authUser);
+                UserDevice ud = new UserDevice();
+                ud.UserId = userId;
+                ud.Authorized = 1;
+                ud.DeviceGuid = newOsHash;
+                ud.IpAddress = ipAddress;
 
-                _unitOfWork.Context.UserDevices.Add(usd);
+                _unitOfWork.Context.UserDevices.Add(ud);
                 _unitOfWork.SaveChanges();
 
 
@@ -344,67 +326,7 @@ namespace PasswordManagerAppResourceServer.Services
         }
        
 
-        /* private void ManageAuthorizedDevices(User authUser)
-        {
-            
-            var c = cookieHandler.GetClientInfo();
-            string browser = c.UA.Family.ToString() + " " + c.UA.Major.ToString();
-
-
-           
-            bool IsNewUserDevice = false;
-            string guidDevice = "";
-            bool IsUserGuidDeviceMatch = true;
-
-
-            var deviceCookieExist = cookieHandler.CheckIfCookieExist("DeviceInfo");
-            if (deviceCookieExist)
-            {
-                var GuidDeviceFromCookie = cookieHandler.ReadAndDecryptCookie("DeviceInfo");
-                IsUserGuidDeviceMatch = CheckUserGuidDeviceInDb(GuidDeviceFromCookie, authUser);
-                if (IsUserGuidDeviceMatch)
-                    return;
-            
-            }
-            if(deviceCookieExist==false || IsUserGuidDeviceMatch==false)
-            {
-                
-
-                guidDevice = Guid.NewGuid().ToString();
-                cookieHandler.CreateCookie("DeviceInfo", guidDevice, null);
-                var userGuidDeviceHash = dataToSHA256(guidDevice);
-                var ipMatchWithPrevious = CheckPreviousUserIp(authUser);
-                 IsNewUserDevice = AddNewDeviceToDb(userGuidDeviceHash, authUser);
-                
-                
-                if( ipMatchWithPrevious )
-                    IsNewUserDevice = false;
-                
-                
-                   
-                
-               
-                
-                
-
-            }
-            
-
-
-
-            
-
-         
-            if (IsNewUserDevice)
-                EmailSendEvent?.Invoke(this, 
-                new Message(new string[] { authUser.Email }, "Nowe urządzenie " + c.OS.ToString(), "Zarejestrowano logowanie z nowego adresu ip: "+GetUserIpAddress(authUser)+", system : " + c.OS.ToString() + " " + browser + " dnia " + DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd' 'HH:mm:ss") + ".")
-                );
-         
-
-
-
-
-        } */
+        
         
         public void InformAllUsersAboutOldPasswords()
         {   
@@ -465,7 +387,7 @@ namespace PasswordManagerAppResourceServer.Services
             string token = authUser.Id.ToString() + "|"+authUser.Email +"|"+DateTime.UtcNow.AddMinutes(10).ToString();
             token = dataProtectionHelper.Encrypt(token,userPassword);
             string url  = QueryHelpers.AddQueryString("https://localhost:5004/auth/deleteaccount2step", "token", token);
-            EmailSendEvent?.Invoke(this, new Message(new string[] { authUser.Email }, "Link do usuniecia konta. Pass Manager App", "Link do usuniecia konta w serwisie Pass Manager App : " + url + " dla uzytkownika: " + authUser.Email + " Podany link bedzie aktywny przez 10 minut."));
+            _emailSender.SendEmailAsync(new Message(new string[] { authUser.Email }, "Link do usuniecia konta. Pass Manager App", "Link do usuniecia konta w serwisie Pass Manager App : " + url + " dla uzytkownika: " + authUser.Email + " Podany link bedzie aktywny przez 10 minut."));
             
 
         }
@@ -517,7 +439,7 @@ namespace PasswordManagerAppResourceServer.Services
             if (isActive)
             {
                 totpToken = _unitOfWork.Users.GetActiveToken(authUser);
-                EmailSendEvent?.Invoke(this, new Message(new string[] { authUser.Email }, "Jednorazowy kod dostępu. Pass Manager App", "Jednorazowy kod dostępu do konta: " + totpToken + " dla uzytkownika: " + authUser.Email + " Podany kod musisz wprowadzic w ciagu 5min"));
+                _emailSender.SendEmailAsync(new Message(new string[] { authUser.Email }, "Jednorazowy kod dostępu. Pass Manager App", "Jednorazowy kod dostępu do konta: " + totpToken + " dla uzytkownika: " + authUser.Email + " Podany kod musisz wprowadzic w ciagu 5min"));
                 
                 return;
             }
@@ -525,7 +447,7 @@ namespace PasswordManagerAppResourceServer.Services
             totpToken = GenerateTotpToken(authUser);
             SaveToDb(authUser, totpToken);
 
-            EmailSendEvent?.Invoke(this, new Message(new string[] { authUser.Email }, "Jednorazowy kod dostępu. Pass Manager App", "Jednorazowy kod dostępu do konta: " + totpToken + " dla uzytkownika: " + authUser.Email+ " Podany kod musisz wprowadzic w ciagu 5min"));
+            _emailSender.SendEmailAsync(new Message(new string[] { authUser.Email }, "Jednorazowy kod dostępu. Pass Manager App", "Jednorazowy kod dostępu do konta: " + totpToken + " dla uzytkownika: " + authUser.Email + " Podany kod musisz wprowadzic w ciagu 5min"));
 
 
         }
@@ -545,13 +467,13 @@ namespace PasswordManagerAppResourceServer.Services
         {
             
             
-            string sysKey = "ajskSJ62j%sjs.;'[ah1";
+            string sysKey = _config["TotpKey"];
             
             long lastUse;
             Totp totp = new Totp(secretKey: Encoding.UTF8.GetBytes(sysKey + authUser.Email), mode: OtpHashMode.Sha512, step: 300,timeCorrection:new TimeCorrection(DateTime.UtcNow));
-           
-            
-            var activeTokenRecordFromDb = _unitOfWork.Context.Totp_Users.Where(b => b.User == authUser && b.Token == totpToken).FirstOrDefault();
+
+
+            var activeTokenRecordFromDb = _unitOfWork.Context.Totp_Users.FirstOrDefault(b => b.UserId == authUser.Id && b.Token == totpToken);
             if (activeTokenRecordFromDb != null)
             {
                
@@ -566,44 +488,37 @@ namespace PasswordManagerAppResourceServer.Services
                 }
 
             }
-            else
-            { 
-                return (int)ResultsToken.NotMatched;
-            }
+            
+            return (int)ResultsToken.NotMatched;
+            
 
         }
 
         public AccessToken GenerateAuthToken(User user)
         {
-            var keyBytes = Encoding.UTF8.GetBytes(_config["JwtSettings:SecretEncyptionKey"]);
+            var keyBytes = Encoding.UTF8.GetBytes(_config["JwtSettings:SecretEncryptionKey"]);
             var symmetricSecurityKey = new SymmetricSecurityKey(keyBytes);
-
             using RSA rsa = RSA.Create();
-            rsa.ImportRSAPrivateKey( // Convert the loaded key from base64 to bytes.
-                source: Convert.FromBase64String(_config["JwtSettings:Asymmetric:PrivateKey"]), // Use the private key to sign tokens
-                bytesRead: out int _); // Discard the out variable 
-
+            rsa.ImportRSAPrivateKey(
+                source: Convert.FromBase64String(_config["JwtSettings:Asymmetric:PrivateKey"]),
+                bytesRead: out int _);
             var signingCredentials = new SigningCredentials(
                 key: new RsaSecurityKey(rsa),
-                algorithm: SecurityAlgorithms.RsaSha256 // Important to use RSA version of the SHA algo 
+                algorithm: SecurityAlgorithms.RsaSha256
             );
             var cryptoKey = new EncryptingCredentials(symmetricSecurityKey, SecurityAlgorithms.Aes256KW, SecurityAlgorithms.Aes256CbcHmacSha512);
             var expirationDate = DateTime.UtcNow.AddMinutes(user.AuthenticationTime != 0 ? user.AuthenticationTime : 5);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new List<Claim>
-                        {
-                            new Claim(ClaimTypes.Name,user.Id.ToString()),
-                            new Claim(System.IdentityModel.Tokens.Jwt.JwtRegisteredClaimNames.Sub,user.Id.ToString()),
-                            new Claim(ClaimTypes.Email,user.Email),
-                            new Claim("Admin", user.Admin.ToString()),
-                            new Claim("TwoFactorAuth", user.TwoFactorAuthorization.ToString()),
-                            new Claim("PasswordNotifications", user.PasswordNotifications.ToString()),
-                            new Claim("AuthTime", user.AuthenticationTime.ToString()),
-
-
-
-                        }),
+                  {
+                     new Claim(ClaimTypes.Name,user.Id.ToString()), 
+                     new Claim(ClaimTypes.Email,user.Email),
+                     new Claim("Admin", user.Admin.ToString()),
+                     new Claim("TwoFactorAuth", user.TwoFactorAuthorization.ToString()),
+                     new Claim("PasswordNotifications", user.PasswordNotifications.ToString()),
+                     new Claim("AuthTime", user.AuthenticationTime.ToString()),
+                  }),
                 Expires = expirationDate,
                 Audience = _config["JwtSettings:Audience"],
                 Issuer = _config["JwtSettings:Issuer"],
@@ -634,14 +549,24 @@ namespace PasswordManagerAppResourceServer.Services
             user.AuthenticationTime = Int32.Parse(upPreferences.VerificationTime);
             user.PasswordNotifications = Int32.Parse(upPreferences.PassNotifications);
             user.TwoFactorAuthorization = Int32.Parse(upPreferences.TwoFactor);
-            _unitOfWork.Users.Update<User>(user);
-            _unitOfWork.SaveChanges();
-            
-
-
+            try
+            {
+                _unitOfWork.Users.Update<User>(user);
+                _unitOfWork.SaveChanges();
+            }
+            catch (Exception)
+            {
+                throw new UserServiceException("There was an error during update. Try again or contact support.");
+            }
         }
 
 
-       
+
+
+
+
+
+
+
     }
 }

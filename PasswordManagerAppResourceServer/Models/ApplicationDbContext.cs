@@ -29,7 +29,19 @@ namespace PasswordManagerAppResourceServer.Models
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            
+            /*
+            modelBuilder.Entity<SharedLoginData>()
+        .HasKey(bc => new { bc.LoginDataId, bc.UserId });
+            modelBuilder.Entity<SharedLoginData>()
+                .HasOne(bc => bc.LoginData)
+                .WithMany(b => b.SharedLoginDatas)
+                .HasForeignKey(bc => bc.LoginDataId);
+            modelBuilder.Entity<SharedLoginData>()
+                .HasOne(bc => bc.User)
+                .WithMany(c => c.SharedLoginDatas)
+                .HasForeignKey(bc => bc.UserId);
+
+            */
 
         }
         

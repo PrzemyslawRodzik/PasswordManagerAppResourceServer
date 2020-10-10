@@ -11,7 +11,7 @@ namespace PasswordManagerAppResourceServer.Services
 {
     public interface IUserService
     {
-        event EventHandler<Message> EmailSendEvent;
+        
         User Authenticate(string email, string password);
         int GetAuthUserId();
         
@@ -42,5 +42,8 @@ namespace PasswordManagerAppResourceServer.Services
           void InformAllUsersAboutOldPasswords();
         void CreateAndSendAuthorizationToken(int authUserId,string password);
         bool ValidateToken(string token,string password);
+        bool CheckUserGuidDeviceInDb(string GuidDeviceHashFromCookie, int userId);
+        bool AddNewDeviceToDb(string newOsHash, int userId, string ipAddress);
+        bool CheckPreviousUserIp(int userId, string ipAddress);
     }
 }
