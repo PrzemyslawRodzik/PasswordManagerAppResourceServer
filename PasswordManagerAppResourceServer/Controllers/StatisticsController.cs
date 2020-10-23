@@ -12,17 +12,17 @@ using PasswordManagerAppResourceServer.Models;
 
 namespace PasswordManagerAppResourceServer.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/")]
     [ApiController]
     public class StatisticsController : ControllerBase
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IMapper _mapper;
+        
 
-        public StatisticsController(IMapper mapper, IUnitOfWork unitOfWork)
+        public StatisticsController(IUnitOfWork unitOfWork)
         {
             _unitOfWork = unitOfWork;
-            _mapper = mapper;
+            
         }
         private int GetUserIdFromJwtToken()
         {
@@ -60,7 +60,7 @@ namespace PasswordManagerAppResourceServer.Controllers
 
         }
         [Authorize]
-        [HttpGet("user-data")]
+        [HttpGet("statistics/user-data")]
         public Dictionary<string,int> GetUserStatisticData()
         {
             
