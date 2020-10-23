@@ -15,7 +15,7 @@ namespace PasswordManagerAppResourceServer.Models
         public virtual DbSet<Totp_user> Totp_Users { get; set; }
         public virtual DbSet<LoginData> LoginDatas { get; set; }
         public virtual DbSet<CreditCard> CreditCards { get; set; }
-        public virtual DbSet<PaypallAcount> PaypallAcounts { get; set; }
+        public virtual DbSet<PaypalAccount> PaypalAccounts { get; set; }
         public virtual DbSet<Note> Notes { get; set; }
         public virtual DbSet<Address> Addresses { get; set; }
         public virtual DbSet<PersonalInfo> PersonalInfos { get; set; }

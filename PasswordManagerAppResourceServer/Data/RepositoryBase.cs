@@ -21,20 +21,14 @@ namespace PasswordManagerAppResourceServer.Data
 
         public  TEntity GetById<TEntity>(int id) where TEntity : class
         {
-            // Here we are working with a DbContext, not PlutoContext. So we don't have DbSets 
-            // such as Courses or Authors, and we need to use the generic Set() method to access them.
-            return Context.Set<TEntity>().Find(id);
+           return Context.Set<TEntity>().Find(id);
         }
 
         public IEnumerable<TEntity> GetAll<TEntity>() where TEntity : class
         {
             return Context.Set<TEntity>().ToList();
         }
-       // public IEnumerable<TEntity> GetAll()
-       // {
-            
-           // return Context.Set<TEntity>().ToList();
-      //  }
+       
 
         public IEnumerable<TEntity> FindByCondition<TEntity>(Expression<Func<TEntity, bool>> predicate) where TEntity : class
         {
@@ -45,10 +39,6 @@ namespace PasswordManagerAppResourceServer.Data
              return Context.Set<TEntity>().Find(id);
         }
 
-        // public IEnumerable<TEntity> Find(Expression<Func<TEntity, bool>> predicate)
-        // {
-        //   return Context.Set<TEntity>().Where(predicate);
-        //  }
 
         public TEntity SingleOrDefault<TEntity>(Expression<Func<TEntity, bool>> predicate) where TEntity : class
         {

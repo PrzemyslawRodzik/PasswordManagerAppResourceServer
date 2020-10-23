@@ -60,18 +60,13 @@ namespace PasswordManagerAppResourceServer.Services
 
         
 
-        public User Create(string email, string password)
-        {   
+        public User Create(string email, string password){  
             if (string.IsNullOrWhiteSpace(password))
                 throw new AuthenticationException("Password is required");
-
             if (VerifyEmail(email))
                 throw new AuthenticationException("Email \"" + email + "\" is already taken");
-
             byte[] passwordHash, passwordSalt;
             CreatePasswordHash(password, out passwordHash, out passwordSalt);
-            var (publicKey, privateKey) = AsymmetricEncryptionHelper.GenerateKeys(password,keyLength:2048);
-
             User user = new User
             {
                 Email = email,
@@ -80,18 +75,16 @@ namespace PasswordManagerAppResourceServer.Services
                 TwoFactorAuthorization = 0,
                 PasswordNotifications = 1,
                 AuthenticationTime = 5,
-                Admin = 0,
-                PrivateKey = privateKey,
-                PublicKey = publicKey
+                Admin = 0
             };
-
             _unitOfWork.Users.Add<User>(user);
             _unitOfWork.SaveChanges();
-
             _emailSender.SendEmailAsync(new Message(new string[] { user.Email }, "Welcome to PasswordManagerApp.com!", "Welcome to PasswordManagerApp.com " + user.Email + " Your account was successfully created."));
-
             return user;
         }
+
+
+        
         public int GetAuthUserId()
         {   
             
@@ -212,11 +205,11 @@ namespace PasswordManagerAppResourceServer.Services
 
         }
 
-        #region private methods
+        
         private  void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
-            if (password == null) throw new ArgumentNullException("password");
-            if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
+            if (password == null) throw new UserServiceException("Password is null");
+            if (string.IsNullOrWhiteSpace(password)) throw new UserServiceException("Value cannot be empty or whitespace only string.");
 
             using (var hmac = new System.Security.Cryptography.HMACSHA512())
             {
@@ -281,14 +274,14 @@ namespace PasswordManagerAppResourceServer.Services
         }
 
 
-        #endregion
+        
 
         public bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
         {
-            if (password == null) throw new ArgumentNullException("password");
-            if (string.IsNullOrWhiteSpace(password)) throw new ArgumentException("Value cannot be empty or whitespace only string.", "password");
-            if (storedHash.Length != 64) throw new ArgumentException("Invalid length of password hash (64 bytes expected).", "passwordHash");
-            if (storedSalt.Length != 128) throw new ArgumentException("Invalid length of password salt (128 bytes expected).", "passwordHash");
+            if (password == null) throw new UserServiceException("Password is null");
+            if (string.IsNullOrWhiteSpace(password)) throw new UserServiceException("Value cannot be empty or whitespace only string.");
+            if (storedHash.Length != 64) throw new UserServiceException("Invalid length of password hash (64 bytes expected).");
+            if (storedSalt.Length != 128) throw new UserServiceException("Invalid length of password salt (128 bytes expected).");
 
             using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
             {
@@ -443,13 +436,9 @@ namespace PasswordManagerAppResourceServer.Services
                 
                 return;
             }
-            
             totpToken = GenerateTotpToken(authUser);
             SaveToDb(authUser, totpToken);
-
             _emailSender.SendEmailAsync(new Message(new string[] { authUser.Email }, "Jednorazowy kod dostępu. Pass Manager App", "Jednorazowy kod dostępu do konta: " + totpToken + " dla uzytkownika: " + authUser.Email + " Podany kod musisz wprowadzic w ciagu 5min"));
-
-
         }
 
         
@@ -465,20 +454,13 @@ namespace PasswordManagerAppResourceServer.Services
 
         public int VerifyTotpToken(User authUser,string totpToken)
         {
-            
-            
             string sysKey = _config["TotpKey"];
-            
             long lastUse;
             Totp totp = new Totp(secretKey: Encoding.UTF8.GetBytes(sysKey + authUser.Email), mode: OtpHashMode.Sha512, step: 300,timeCorrection:new TimeCorrection(DateTime.UtcNow));
-
-
             var activeTokenRecordFromDb = _unitOfWork.Context.Totp_Users.FirstOrDefault(b => b.UserId == authUser.Id && b.Token == totpToken);
             if (activeTokenRecordFromDb != null)
             {
-               
-               
-                if (activeTokenRecordFromDb.Expire_date >= DateTime.UtcNow)
+               if (activeTokenRecordFromDb.Expire_date >= DateTime.UtcNow)
                 {
                     return totp.VerifyTotp(totpToken, out lastUse,window:new VerificationWindow(1,1)) ? (int)ResultsToken.Matched:(int)ResultsToken.NotMatched; 
                 }
@@ -488,10 +470,7 @@ namespace PasswordManagerAppResourceServer.Services
                 }
 
             }
-            
             return (int)ResultsToken.NotMatched;
-            
-
         }
 
         public AccessToken GenerateAuthToken(User user)
@@ -527,12 +506,9 @@ namespace PasswordManagerAppResourceServer.Services
                 SigningCredentials = signingCredentials,
                 EncryptingCredentials = cryptoKey
             };
-
-
             var tokenHandler = new JwtSecurityTokenHandler();
             var token = tokenHandler.CreateToken(tokenDescriptor);
             var tokenJson = tokenHandler.WriteToken(token);
-
             return new AccessToken
             {
                 JwtToken = tokenJson,
@@ -553,6 +529,7 @@ namespace PasswordManagerAppResourceServer.Services
             {
                 _unitOfWork.Users.Update<User>(user);
                 _unitOfWork.SaveChanges();
+                
             }
             catch (Exception)
             {

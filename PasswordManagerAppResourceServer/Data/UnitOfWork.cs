@@ -1,6 +1,6 @@
 ﻿using PasswordManagerAppResourceServer.Interfaces;
 using PasswordManagerAppResourceServer.Models;
-
+using System.Collections.Generic;
 
 namespace PasswordManagerAppResourceServer.Data
 {
@@ -26,6 +26,24 @@ namespace PasswordManagerAppResourceServer.Data
             return Context.SaveChanges();
         }
 
-       
+        public Dictionary<string, int> GetStatisticData(int userId)
+        {
+            Dictionary<string, int> statisticData = new Dictionary<string,int>();
+            var user = Users.Find<User>(userId);
+            statisticData.Add("countCreditCards", Wallet.GetDataCountForUser<CreditCard>(user));
+            statisticData.Add("countSharedData", Wallet.GetDataCountForUser<SharedLoginData>(user));
+            statisticData.Add("countPasswords", Wallet.GetDataCountForUser<PaypalAccount>(user)+ Wallet.GetDataCountForUser<LoginData>(user));
+            statisticData.Add("countCompromised", Wallet.GetDataBreachCountForUser<PaypalAccount>(user) + Wallet.GetDataBreachCountForUser<LoginData>(user));
+
+            return statisticData;
+        }
+
+
+
+
+
+
+
+
     }
 }

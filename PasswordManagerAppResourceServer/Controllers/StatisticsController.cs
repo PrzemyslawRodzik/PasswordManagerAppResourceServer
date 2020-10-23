@@ -12,7 +12,7 @@ using PasswordManagerAppResourceServer.Models;
 
 namespace PasswordManagerAppResourceServer.Controllers
 {
-    [Route("api/")]
+    [Route("api/[controller]")]
     [ApiController]
     public class StatisticsController : ControllerBase
     {
@@ -24,8 +24,22 @@ namespace PasswordManagerAppResourceServer.Controllers
             _unitOfWork = unitOfWork;
             _mapper = mapper;
         }
-       
-        
+        private int GetUserIdFromJwtToken()
+        {
+            int id = -1;
+            try
+            {
+                id = Int32.Parse(HttpContext.User.Identity.Name);
+                return id;
+            }
+            catch (Exception)
+            {
+                return id;
+            }
+
+        }
+
+
         [AllowAnonymous]
         // POST api/visitoragents
         [HttpPost("visitoragents")]
@@ -45,7 +59,15 @@ namespace PasswordManagerAppResourceServer.Controllers
 
 
         }
+        [Authorize]
+        [HttpGet("user-data")]
+        public Dictionary<string,int> GetUserStatisticData()
+        {
+            
+            return _unitOfWork.GetStatisticData(GetUserIdFromJwtToken());
+             
 
+        }
 
     }
 }

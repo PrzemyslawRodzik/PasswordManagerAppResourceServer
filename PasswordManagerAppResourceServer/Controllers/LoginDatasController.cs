@@ -15,21 +15,19 @@ using PasswordManagerAppResourceServer.Models;
 namespace PasswordManagerAppResourceServer.Controllers
 {
     // api/logindatas
-   // [Authorize]
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class LoginDatasController : ControllerBase
     {
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-
-
         public LoginDatasController(IMapper mapper, IUnitOfWork unitOfWork)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
-
         }
+        
 
         private int GetUserIdFromJwtToken()
         {
@@ -45,41 +43,32 @@ namespace PasswordManagerAppResourceServer.Controllers
             }
             
         }
-
         // GET: api/logindatas
+        [AllowAnonymous]
         [HttpGet]
-        public ActionResult<IEnumerable<LoginData>> GetAllLoginDatas([FromQuery] int? userId, [FromQuery]int?compromised)
+        public ActionResult<IEnumerable<LoginData>> GetAllLoginDatas([FromQuery] int? userId, 
+        [FromQuery]int?compromised)
         {
             List<LoginData> logins = null;
             if (userId  is null &&  compromised is null)
                 logins = _unitOfWork.Context.LoginDatas.ToList();
             else if(userId!=null && compromised is null)
-                logins = _unitOfWork.Context.LoginDatas.Where(x => x.UserId == userId).ToList();
+                logins = _unitOfWork.Context.LoginDatas.
+                Where(x => x.UserId == userId).ToList();
             else if(userId != null && compromised==1)
-                logins = _unitOfWork.Context.LoginDatas.Where(x => x.UserId == userId && x.Compromised==1).ToList();
+                logins = _unitOfWork.Context.LoginDatas.
+                Where(x => x.UserId == userId && x.Compromised==1).ToList();
             else if (userId != null && compromised == 0)
-                logins = _unitOfWork.Context.LoginDatas.Where(x => x.UserId == userId && x.Compromised == 0).ToList();
-
+                logins = _unitOfWork.Context.LoginDatas.
+                Where(x => x.UserId == userId && x.Compromised == 0).ToList();
 
             if (logins.Count <= 0)
                 return NoContent();
 
             var loginsDto = _mapper.Map<IEnumerable<LoginDataDto>>(logins);
             return Ok(loginsDto);
-
-
         }
-
-
-
-
-
-
-
-
-
-
-        // GET api/logindatas/5
+        // GET api/logindatas/{id}
         [HttpGet("{id}", Name = "GetLoginDataById")]
         public ActionResult<LoginDataDto> GetLoginDataById(int id)
         {
@@ -90,10 +79,7 @@ namespace PasswordManagerAppResourceServer.Controllers
                 return Ok(loginDto);
 
             return NotFound();
-
-
         }
-
         // POST api/logindatas
         [HttpPost]
         public ActionResult<LoginDataDto> CreateLoginData([FromBody] LoginDataDto loginDataDto)
@@ -103,37 +89,22 @@ namespace PasswordManagerAppResourceServer.Controllers
             loginData.ModifiedDate = DateTime.UtcNow.ToLocalTime();
             _unitOfWork.Context.LoginDatas.Add(loginData);
             _unitOfWork.SaveChanges();
-
             var loginDtoResult = _mapper.Map<LoginDataDto>(loginData);
-
             return CreatedAtRoute(nameof(GetLoginDataById), new { Id = loginData.Id }, loginDtoResult);
-
         }
-
-        // PUT api/logindatas/5
         [HttpPut("{id}")]
-        public ActionResult UpdateLoginData(int id, [FromBody] LoginDataDto loginDataDto)
-        {
+        public ActionResult UpdateLoginData(int id, [FromBody] LoginDataDto loginDataDto){
             var loginDataFromDb = _unitOfWork.Context.LoginDatas.Find(id);
             if (loginDataFromDb is null)
                 return NotFound();
-
-
-
-
             _mapper.Map(loginDataDto, loginDataFromDb);
             loginDataFromDb.ModifiedDate = DateTime.UtcNow.ToLocalTime();
             _unitOfWork.Context.LoginDatas.Update(loginDataFromDb);
             _unitOfWork.SaveChanges();
-
             return NoContent();
         }
-
-        // DELETE api/logindatas/5
         [HttpDelete("{id}")]
-        public ActionResult DeleteLoginData(int id)
-        {
-
+        public ActionResult DeleteLoginData(int id){
             var loginData = _unitOfWork.Context.LoginDatas.Find(id);
             if (loginData.UserId != GetUserIdFromJwtToken())
                 return BadRequest();

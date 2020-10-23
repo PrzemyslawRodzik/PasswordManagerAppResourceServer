@@ -10,7 +10,7 @@
     
    
     <PackageReference Include="NETCore.MailKit" Version="2.0.3" />
-    <PackageReference Include="MimeKit" Version="2.9.1" />
+    <PackageReference Include="MimeKit" Version="2.9.2" />
 	
     
   </ItemGroup>

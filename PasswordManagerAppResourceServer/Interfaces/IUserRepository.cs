@@ -2,6 +2,7 @@
 
 
 using PasswordManagerAppResourceServer.Models;
+using System.Collections.Generic;
 
 namespace PasswordManagerAppResourceServer.Interfaces
 {
@@ -10,5 +11,6 @@ namespace PasswordManagerAppResourceServer.Interfaces
         bool CheckIfUserExist(string email);
         public string GetActiveToken(User authUser);
         public bool IsTokenActive(User authUser);
+        
     }
 }

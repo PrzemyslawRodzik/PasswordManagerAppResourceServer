@@ -32,22 +32,15 @@ namespace PasswordManagerAppResourceServer.Models
         [Column("authentication_time")]
         public int AuthenticationTime { get; set; }
     
-        [Required]
-        [Column("private_key")]
-        public string PrivateKey { get; set; }
-        [Required]
-        [Column("public_key")]
-        public string PublicKey { get; set; }
+     
 
     
         public PersonalInfo PersonalInfo { get; set; }
-        
-
-        public ICollection<UserDevice> UserDevices { get; set; }
+         public ICollection<UserDevice> UserDevices { get; set; }
         public ICollection<Totp_user> Totp_Users { get; set; }
         public ICollection<LoginData> LoginDatas { get; set; }
         public ICollection<CreditCard> CreditCards { get; set; }
-        public ICollection<PaypallAcount> PaypallAcounts { get; set; }
+        public ICollection<PaypalAccount> PaypallAcounts { get; set; }
         public ICollection<Note> Notes { get; set; }
         public ICollection<SharedLoginData> SharedLoginDatas { get; set; }
 

@@ -50,12 +50,7 @@ namespace PasswordManagerAppResourceServer.Controllers
         [Route("login")]
         public IActionResult LogIn([FromBody] UserLoginRequest model)
         {
-            if (!ModelState.IsValid)
-            {
-                throw new AuthenticationException(ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage)).ToString());
-
-            }
-
+            
             var authUser = _userService.Authenticate(model.Email, model.Password);
             if(authUser is null)
                 throw new AuthenticationException("Incorrect email or password!");
@@ -77,10 +72,7 @@ namespace PasswordManagerAppResourceServer.Controllers
                  Success = true,
                  AccessToken = _userService.GenerateAuthToken(authUser)
             });
-            
-
-            
-                
+               
         }
 
 
@@ -88,11 +80,6 @@ namespace PasswordManagerAppResourceServer.Controllers
         [HttpPost("register")]
         public  IActionResult Register([FromBody] UserRegistrationRequest request)
         {
-            if (!ModelState.IsValid)
-            {
-                throw new AuthenticationException(ModelState.Values.SelectMany(x => x.Errors.Select(xx => xx.ErrorMessage)).ToString());
-
-            }
             User newUser;
             
             newUser = _userService.Create(request.Email, request.Password); 
@@ -108,7 +95,6 @@ namespace PasswordManagerAppResourceServer.Controllers
     [HttpPost("twofactorlogin")]
     public IActionResult TwoFactorLogIn([FromBody] TwoFactorLoginRequest model)
         {
-            
             var user = _userService.GetById(model.UserId);
             var verificationStatus = _userService.VerifyTotpToken(user, model.Token);
             if (verificationStatus != 1)
@@ -118,18 +104,14 @@ namespace PasswordManagerAppResourceServer.Controllers
                         {
                             Success = false,
                             VerificationStatus = 0,
-                            Messages = new string[] {"Wrong code"},
-
+                            Messages = new string[] {"Wrong code"}
                         });
-
-                
                 else
                     return BadRequest(new
                         {
                             Success = false,
                             VerificationStatus = 2,
                             Messages = new string[] { "Code expired" }
-
                         });
             }
             else

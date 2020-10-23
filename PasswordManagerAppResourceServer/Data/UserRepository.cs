@@ -1,6 +1,7 @@
 ﻿using PasswordManagerAppResourceServer.Interfaces;
 using PasswordManagerAppResourceServer.Models;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 
@@ -18,10 +19,6 @@ namespace PasswordManagerAppResourceServer.Data
             get { return Context as ApplicationDbContext; }
         }
 
-
-
-
-
         public bool CheckIfUserExist(string email)
         {
             return ApplicationDbContext.Users.Any(u => u.Email == email);
@@ -34,7 +31,7 @@ namespace PasswordManagerAppResourceServer.Data
             return model.Token;
         }
 
-
+       
         public bool IsTokenActive(User authUser)
         {
             var currentTime = DateTime.UtcNow;

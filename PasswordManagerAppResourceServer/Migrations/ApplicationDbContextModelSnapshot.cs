@@ -14,7 +14,7 @@ namespace PasswordManagerAppResourceServer.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "3.1.7");
+                .HasAnnotation("ProductVersion", "3.1.9");
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.Address", b =>
                 {
@@ -195,7 +195,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                     b.ToTable("note");
                 });
 
-            modelBuilder.Entity("PasswordManagerAppResourceServer.Models.PaypallAcount", b =>
+            modelBuilder.Entity("PasswordManagerAppResourceServer.Models.PaypalAccount", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -390,16 +390,6 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("password_salt")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("PrivateKey")
-                        .IsRequired()
-                        .HasColumnName("private_key")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("PublicKey")
-                        .IsRequired()
-                        .HasColumnName("public_key")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("TwoFactorAuthorization")
                         .HasColumnName("two_factor_authorization")
                         .HasColumnType("INTEGER");
@@ -507,7 +497,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PasswordManagerAppResourceServer.Models.PaypallAcount", b =>
+            modelBuilder.Entity("PasswordManagerAppResourceServer.Models.PaypalAccount", b =>
                 {
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithMany("PaypallAcounts")

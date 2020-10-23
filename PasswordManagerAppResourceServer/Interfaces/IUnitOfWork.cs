@@ -1,6 +1,7 @@
 ﻿
 using PasswordManagerAppResourceServer.Interfaces;
 using PasswordManagerAppResourceServer.Models;
+using System.Collections.Generic;
 
 namespace PasswordManagerAppResourceServer.Interfaces
 {
@@ -15,5 +16,6 @@ namespace PasswordManagerAppResourceServer.Interfaces
 
         
         int SaveChanges();
+        Dictionary<string, int> GetStatisticData(int userId);
     }
 }

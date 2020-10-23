@@ -9,9 +9,9 @@ namespace PasswordManagerAppResourceServer.Interfaces
     public interface IWalletRepository: IRepositoryBase
     {
         IEnumerable<LoginData> GetAllLoginDataBreach();
-        IEnumerable<PaypallAcount> GetAllPaypallBreach();
+        IEnumerable<PaypalAccount> GetAllPaypallBreach();
         int GetDataCountForUser<TEntity>(User user) where TEntity : UserRelationshipModel;
-        int GetDataBreachForUser<TEntity>(User user) where TEntity : class, ICompromisedEntity;
+        int GetDataBreachCountForUser<TEntity>(User user) where TEntity : class, ICompromisedEntity;
          IEnumerable<LoginData> GetUnchangedPasswordsForUser(int userId);
     }
 }

@@ -31,12 +31,12 @@ namespace PasswordManagerAppResourceServer.Data
             }
             
         }
-        public IEnumerable<PaypallAcount> GetAllPaypallBreach()
+        public IEnumerable<PaypalAccount> GetAllPaypallBreach()
         {
 
             try
             {
-                return ApplicationDbContext.PaypallAcounts.Where(ld => ld.Compromised == 1).ToList();
+                return ApplicationDbContext.PaypalAccounts.Where(ld => ld.Compromised == 1).ToList();
             }
             catch (ArgumentNullException)
             {
@@ -56,18 +56,12 @@ namespace PasswordManagerAppResourceServer.Data
         }
         public int  GetDataCountForUser<TEntity>(User user) where TEntity: UserRelationshipModel
         {
-            Type type = typeof(TEntity);
-            
-                return ApplicationDbContext.Set<TEntity>().Where(ld => ld.User == user).ToList().Count();
-
+            return ApplicationDbContext.Set<TEntity>().Where(ld => ld.UserId == user.Id).ToList().Count();
 
         }
-        public int GetDataBreachForUser<TEntity>(User user) where TEntity : class,ICompromisedEntity
+        public int GetDataBreachCountForUser<TEntity>(User user) where TEntity : class,ICompromisedEntity
         {
-            
-
-            return ApplicationDbContext.Set<TEntity>().Where(ld => ld.User == user && ld.Compromised==1).ToList().Count();
-
+            return ApplicationDbContext.Set<TEntity>().Where(ld => ld.UserId == user.Id && ld.Compromised==1).ToList().Count();
 
         }
 

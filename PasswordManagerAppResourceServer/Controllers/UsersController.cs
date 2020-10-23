@@ -1,21 +1,17 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using PasswordManagerAppResourceServer.Dtos;
-using PasswordManagerAppResourceServer.Interfaces;
 using PasswordManagerAppResourceServer.Models;
 using PasswordManagerAppResourceServer.Responses;
 using PasswordManagerAppResourceServer.Services;
-using Newtonsoft.Json.Linq;
 using PasswordManagerAppResourceServer.CustomExceptions;
 using EmailService;
 
 namespace PasswordManagerAppResourceServer.Controllers
-{   
+{
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
@@ -154,7 +150,7 @@ namespace PasswordManagerAppResourceServer.Controllers
               _emailSender.SendEmailAsync(
                   new Message(
                 new string[] { authUserEmail },
-                "Nowe urz¹dzenie " + request.OSName, "Zarejestrowano logowanie z nowego adresu ip: " + request.IpAddress + ", system : " + request.OSName + " " + request.BrowserName + " dnia " + DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd' 'HH:mm:ss") + "."));
+                "Nowe urzadzenie " + request.OSName, "Zarejestrowano logowanie z nowego adresu ip: " + request.IpAddress + ", system : " + request.OSName + " " + request.BrowserName + " dnia " + DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd' 'HH:mm:ss") + "."));
 
             return Ok();
 

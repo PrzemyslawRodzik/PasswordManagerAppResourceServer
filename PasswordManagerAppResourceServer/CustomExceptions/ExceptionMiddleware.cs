@@ -31,12 +31,10 @@ namespace PasswordManagerAppResourceServer.CustomExceptions
         }
         private Task HandleExceptionAsync(HttpContext context, Exception ex)
         {
-            
             int httpStatusCode = (int)HttpStatusCode.InternalServerError;
 
             if (ex is AuthenticationException || ex is UserServiceException)
                 httpStatusCode = (int)HttpStatusCode.BadRequest;
-
 
             context.Response.ContentType = "application/json";
             context.Response.StatusCode = httpStatusCode;
