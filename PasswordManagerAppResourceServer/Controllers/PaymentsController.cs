@@ -45,12 +45,21 @@ namespace PasswordManagerAppResourceServer.Controllers
         
         // GET: api/paypalaccounts
         [HttpGet("paypalaccounts")]
-        public ActionResult<IEnumerable<PaypalAccountDto>> GetAllPaypalAccounts()
+        public ActionResult<IEnumerable<PaypalAccountDto>> GetAllPaypalAccounts([FromQuery] int? userId,
+        [FromQuery] int? compromised)
         {
             List<PaypalAccount> paypalAccounts = null;
-
-            paypalAccounts = _unitOfWork.Context.PaypalAccounts.ToList();
-
+            if (userId is null && compromised is null)
+                paypalAccounts = _unitOfWork.Context.PaypalAccounts.ToList();
+            else if (userId != null && compromised is null)
+                paypalAccounts = _unitOfWork.Context.PaypalAccounts.
+                Where(x => x.UserId == userId).ToList();
+            else if (userId != null && compromised == 1)
+                paypalAccounts = _unitOfWork.Context.PaypalAccounts.
+                Where(x => x.UserId == userId && x.Compromised == 1).ToList();
+            else if (userId != null && compromised == 0)
+                paypalAccounts = _unitOfWork.Context.PaypalAccounts.
+                Where(x => x.UserId == userId && x.Compromised == 0).ToList();
 
             if (paypalAccounts.Count <= 0)
                 return NoContent();
@@ -124,11 +133,11 @@ namespace PasswordManagerAppResourceServer.Controllers
 
         // GET: api/creditcards
         [HttpGet("creditcards")]
-        public ActionResult<IEnumerable<CreditCardDto>> GetAllCreditCards()
+        public ActionResult<IEnumerable<CreditCardDto>> GetAllCreditCards([FromQuery]int? userId)
         {
             List<CreditCard> creditCards = null;
 
-            creditCards = _unitOfWork.Context.CreditCards.ToList();
+            creditCards = _unitOfWork.Context.CreditCards.Where(x=>x.UserId==userId).ToList();
             if (creditCards.Count <= 0)
                 return NoContent();
 

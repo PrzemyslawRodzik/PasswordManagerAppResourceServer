@@ -42,19 +42,21 @@ namespace PasswordManagerAppResourceServer.Services
         public DataProtectionHelper dataProtectionHelper;
         
         private readonly IConfiguration _config;
+        private readonly EncryptionService _encryptService;
         private readonly IEmailSender _emailSender;
         
 
         
 
 
-        public UserService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IDataProtectionProvider provider,IEmailSender emailSender, IConfiguration config)
+        public UserService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IDataProtectionProvider provider,IEmailSender emailSender, IConfiguration config, EncryptionService encryptService)
         {
             _unitOfWork = unitOfWork;
             _httpContextAccessor = httpContextAccessor;  
              _emailSender = emailSender;
             dataProtectionHelper = new DataProtectionHelper(provider);
             _config = config;
+            _encryptService = encryptService;
 
         }
 
@@ -177,12 +179,13 @@ namespace PasswordManagerAppResourceServer.Services
         {
             throw new NotImplementedException();
         }
-        public bool ChangeMasterPassword(string password,string authUserId)
+        public bool ChangeMasterPassword(string oldPassword,string newPassword,string authUserId)
         {   
             var authUserIdToInt32 = Int32.Parse(authUserId);
             User user = _unitOfWork.Users.Find<User>(authUserIdToInt32);
             byte[] passwordHash, passwordSalt;
-            CreatePasswordHash(password, out passwordHash, out passwordSalt);
+            EncryptWithNewPassword(authUserIdToInt32, oldPassword,newPassword);
+            CreatePasswordHash(newPassword, out passwordHash, out passwordSalt);
             user.Password = Convert.ToBase64String(passwordHash);
             user.PasswordSalt = Convert.ToBase64String(passwordSalt);
             try
@@ -196,16 +199,67 @@ namespace PasswordManagerAppResourceServer.Services
             {
                 throw new UserServiceException("There was an during password change. Contact support or try again later.");
             }
+         }
+        private void EncryptWithNewPassword(int userId,string oldPassword,string newPassword)
+        {
+            var logins = _unitOfWork.Wallet.GetAllUserData<LoginData>(userId);
+            var paypalAccounts = _unitOfWork.Wallet.GetAllUserData<PaypalAccount>(userId);
+            var notes = _unitOfWork.Wallet.GetAllUserData<Note>(userId);
+            var addresses = _unitOfWork.Wallet.GetAllUserPhonesOrAddresses<Address>(userId);
+            var personals = _unitOfWork.Wallet.GetAllUserData<PersonalInfo>(userId);
+            var phoneNumbers = _unitOfWork.Wallet.GetAllUserPhonesOrAddresses<PhoneNumber>(userId);
+            var creditCards = _unitOfWork.Wallet.GetAllUserData<CreditCard>(userId);
             
+            foreach (var x in logins)
+            {
+                x.Password = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.Password));
+            }
+            foreach (var x in paypalAccounts)
+            {
+                x.Password = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.Password));
+            }
+            foreach (var x in notes)
+            {
+                x.Details = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.Details));
+            }
+            foreach (var x in addresses)
+            {
+                x.Street = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.Street));
+                x.ZipCode = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.ZipCode));
+                x.City = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.City));
+            }
+            foreach (var x in phoneNumbers)
+            {
+               
+                x.TelNumber = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.TelNumber));
 
+            }
+            foreach (var x in creditCards)
+            {
+                x.CardNumber = _encryptService.Encrypt(newPassword,_encryptService.Decrypt(oldPassword, x.CardNumber));
+                x.CardHolderName = _encryptService.Encrypt(newPassword,_encryptService.Decrypt(oldPassword, x.CardHolderName));
+                x.SecurityCode = _encryptService.Encrypt(newPassword,_encryptService.Decrypt(oldPassword, x.SecurityCode));
+            }
+            foreach (var x in personals)
+            {
+                x.Name = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.Name));
+                x.LastName = _encryptService.Encrypt(newPassword, _encryptService.Decrypt(oldPassword, x.LastName));
+                
+            }
+            _unitOfWork.Context.LoginDatas.UpdateRange(logins);
+            _unitOfWork.Context.PaypalAccounts.UpdateRange(paypalAccounts);
+            _unitOfWork.Context.Notes.UpdateRange(notes);
+            _unitOfWork.Context.Addresses.UpdateRange(addresses);
+            _unitOfWork.Context.PhoneNumbers.UpdateRange(phoneNumbers);
+            _unitOfWork.Context.CreditCards.UpdateRange(creditCards);
+            _unitOfWork.Context.PersonalInfos.UpdateRange(personals);
 
-            
-
-
+            _unitOfWork.SaveChanges();
 
         }
-
         
+
+
         private  void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             if (password == null) throw new UserServiceException("Password is null");
@@ -260,7 +314,8 @@ namespace PasswordManagerAppResourceServer.Services
         }
         private string GetUserIpAddress() => _httpContextAccessor.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
-        public bool CheckPreviousUserIp(int userId, string ipAddress) => _unitOfWork.Context.UserDevices.Any(x => x.UserId == userId && x.IpAddress.Equals(ipAddress));
+        public bool CheckPreviousUserIp(int userId, string ipAddress) => 
+            _unitOfWork.Context.UserDevices.Any(x => x.UserId == userId && x.IpAddress.Equals(ipAddress));
         
             
            
@@ -276,13 +331,14 @@ namespace PasswordManagerAppResourceServer.Services
 
         
 
-        public bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt)
+        public bool VerifyPasswordHash(string password, byte[] storedHash, 
+            byte[] storedSalt)
         {
-            if (password == null) throw new UserServiceException("Password is null");
-            if (string.IsNullOrWhiteSpace(password)) throw new UserServiceException("Value cannot be empty or whitespace only string.");
-            if (storedHash.Length != 64) throw new UserServiceException("Invalid length of password hash (64 bytes expected).");
-            if (storedSalt.Length != 128) throw new UserServiceException("Invalid length of password salt (128 bytes expected).");
-
+            if (password == null || 
+                string.IsNullOrWhiteSpace(password) || 
+                storedHash.Length != 64 || 
+                storedSalt.Length != 128)
+                    return false;
             using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
             {
                 var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
@@ -291,7 +347,6 @@ namespace PasswordManagerAppResourceServer.Services
                     if (computedHash[i] != storedHash[i]) return false;
                 }
             }
-
             return true;
         }
 
@@ -377,17 +432,18 @@ namespace PasswordManagerAppResourceServer.Services
         public void CreateAndSendAuthorizationToken(int authUserId,string userPassword)
         {
             User authUser = GetById(authUserId);
-            string token = authUser.Id.ToString() + "|"+authUser.Email +"|"+DateTime.UtcNow.AddMinutes(10).ToString();
+            string token = authUser.Id.ToString() + "|" + authUser.Email + "|" + DateTime.UtcNow.AddMinutes(10).ToString();
             token = dataProtectionHelper.Encrypt(token,userPassword);
-            string url  = QueryHelpers.AddQueryString("https://localhost:5004/auth/deleteaccount2step", "token", token);
-            _emailSender.SendEmailAsync(new Message(new string[] { authUser.Email }, "Link do usuniecia konta. Pass Manager App", "Link do usuniecia konta w serwisie Pass Manager App : " + url + " dla uzytkownika: " + authUser.Email + " Podany link bedzie aktywny przez 10 minut."));
-            
-
+            string url  = QueryHelpers.AddQueryString($"{_config["WebDomain"]}auth/deleteaccount2step", "token", token);
+            _emailSender.SendEmailAsync(new Message(new string[] { authUser.Email }, 
+                "Link do usunięcia konta. Pass Manager App", "Link do usunięcia konta w serwisie Pass Manager App : " + url + " dla uzytkownika: " 
+                + authUser.Email + " Podany link będzie aktywny przez 10 minut."));
         }
-        public bool ValidateToken(string token,string password)
-        {   
-            
-            var authUserId = _httpContextAccessor.HttpContext.User.Identity.Name;
+
+
+        public bool ValidateToken(string token,string password){   
+            var authUserId = _httpContextAccessor.
+                                HttpContext.User.Identity.Name;
             User authUser = GetById(Int32.Parse(authUserId));
             string decryptedToken = "";
             try
@@ -398,21 +454,16 @@ namespace PasswordManagerAppResourceServer.Services
             {
                 return false;
             }
-            
-            
             var tokenArray = decryptedToken.Split("|");
-           
-            
-            
             if(tokenArray[0].Equals(authUserId) && tokenArray[1].Equals(authUser.Email) )
             {
                 DateTime expiredDate = DateTime.Parse(tokenArray[2]);
-                if(DateTime.Compare(DateTime.UtcNow,expiredDate)<0   )
+                if(DateTime.Compare(DateTime.UtcNow,expiredDate)<0)
+                {
                     return true;
-
+                }
             }
             return false;
-
         }
 
 
@@ -520,7 +571,6 @@ namespace PasswordManagerAppResourceServer.Services
 
         public void UpdatePreferences(UpdatePreferencesWrapper upPreferences, int userId)
         {
-            
             User user = _unitOfWork.Users.Find<User>(userId);
             user.AuthenticationTime = Int32.Parse(upPreferences.VerificationTime);
             user.PasswordNotifications = Int32.Parse(upPreferences.PassNotifications);
@@ -528,12 +578,12 @@ namespace PasswordManagerAppResourceServer.Services
             try
             {
                 _unitOfWork.Users.Update<User>(user);
-                _unitOfWork.SaveChanges();
-                
+                _unitOfWork.SaveChanges();    
             }
             catch (Exception)
             {
-                throw new UserServiceException("There was an error during update. Try again or contact support.");
+                throw new UserServiceException(
+                    "There was an error during update. Try again or contact support.");
             }
         }
 

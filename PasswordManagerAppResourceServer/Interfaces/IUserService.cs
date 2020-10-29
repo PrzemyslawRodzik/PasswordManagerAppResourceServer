@@ -20,7 +20,7 @@ namespace PasswordManagerAppResourceServer.Services
         AccessToken GenerateAuthToken(User authUser);
         User Create(string email, string password);
         void Update(User user, string password= null);
-         bool ChangeMasterPassword(string password,string authUserId);
+        bool ChangeMasterPassword(string oldPassword, string newPassword, string authUserId);
         IEnumerable<User> GetAll();
 
         

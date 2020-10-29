@@ -102,7 +102,10 @@ namespace PasswordManagerAppResourceServer.Controllers
 
             if (!_userService.VerifyPasswordHash(model.Password, Convert.FromBase64String(authUser.Password), Convert.FromBase64String(authUser.PasswordSalt)))
                 throw new AuthenticationException("Password is incorrect.");
-            var isSuccess = _userService.ChangeMasterPassword(model.NewPassword, GetUserIdFromJwtToken().ToString());
+            
+            // odszyfrowac starym  i zaszyfrowac nowym haslem
+            
+            var isSuccess = _userService.ChangeMasterPassword(model.Password,model.NewPassword, GetUserIdFromJwtToken().ToString());
             return Ok(new ApiResponse
                 {
                     Success = true,
@@ -145,19 +148,15 @@ namespace PasswordManagerAppResourceServer.Controllers
             var authUserEmail = _userService.GetById(authUserId).Email;
             var ipMatchWithPrevious = _userService.CheckPreviousUserIp(authUserId, request.IpAddress);  
             _userService.AddNewDeviceToDb(request.GuidDevice, authUserId, request.IpAddress); 
-           
             if (!ipMatchWithPrevious)
               _emailSender.SendEmailAsync(
                   new Message(
                 new string[] { authUserEmail },
-                "Nowe urzadzenie " + request.OSName, "Zarejestrowano logowanie z nowego adresu ip: " + request.IpAddress + ", system : " + request.OSName + " " + request.BrowserName + " dnia " + DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd' 'HH:mm:ss") + "."));
-
+                "Nowe urzadzenie " + request.OSName, "Zarejestrowano logowanie z nowego adresu ip: " 
+                + request.IpAddress + ", system : " 
+                + request.OSName + " " + request.BrowserName + " dnia " 
+                + DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd' 'HH:mm:ss") + "."));
             return Ok();
-
-
-
-           
-               
         }
 
 

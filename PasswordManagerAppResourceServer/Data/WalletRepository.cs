@@ -25,7 +25,7 @@ namespace PasswordManagerAppResourceServer.Data
             {
                 return ApplicationDbContext.LoginDatas.Where(ld => ld.Compromised == 1).ToList();
             }
-            catch (ArgumentNullException )
+            catch (Exception )
             {
                 return null;
             }
@@ -38,7 +38,7 @@ namespace PasswordManagerAppResourceServer.Data
             {
                 return ApplicationDbContext.PaypalAccounts.Where(ld => ld.Compromised == 1).ToList();
             }
-            catch (ArgumentNullException)
+            catch (Exception)
             {
                 return null;
             }
@@ -56,12 +56,55 @@ namespace PasswordManagerAppResourceServer.Data
         }
         public int  GetDataCountForUser<TEntity>(User user) where TEntity: UserRelationshipModel
         {
-            return ApplicationDbContext.Set<TEntity>().Where(ld => ld.UserId == user.Id).ToList().Count();
+            try
+            {
 
+            return ApplicationDbContext.Set<TEntity>().Where(ld => ld.UserId == user.Id).ToList().Count();
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
         }
-        public int GetDataBreachCountForUser<TEntity>(User user) where TEntity : class,ICompromisedEntity
+        public int GetDataBreachCountForUser<TEntity>(User user) where TEntity : UserRelationshipModel,ICompromisedEntity
         {
+            try
+            {
             return ApplicationDbContext.Set<TEntity>().Where(ld => ld.UserId == user.Id && ld.Compromised==1).ToList().Count();
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+
+        public List<T> GetAllUserData<T>(int userId) where T:UserRelationshipModel
+        {
+            try
+            {
+                return ApplicationDbContext.Set<T>().Where(tt => tt.UserId == userId).ToList();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+            
+        }
+        public List<T> GetAllUserPhonesOrAddresses<T>(int userId) where T : PersonalModel
+        {
+            try
+            {
+                int personalId = 0;
+                var personalInfo = ApplicationDbContext.PersonalInfos.FirstOrDefault(tt => tt.UserId == userId);
+                if (!(personalInfo is null))
+                    personalId = personalInfo.Id; 
+                return ApplicationDbContext.Set<T>().Where(tt => tt.PersonalInfoId == personalId).ToList();
+
+            }
+            catch (Exception)
+            {
+                return null;
+            }
 
         }
 
@@ -74,8 +117,7 @@ namespace PasswordManagerAppResourceServer.Data
     {
         
         public int Compromised { get; set; }
-        public int UserId { get; set; }
-        public User User { get; set; }
+        
 
 
     }

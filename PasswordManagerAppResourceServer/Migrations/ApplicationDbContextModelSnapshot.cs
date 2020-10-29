@@ -214,6 +214,11 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("modified_date")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnName("name")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnName("password")

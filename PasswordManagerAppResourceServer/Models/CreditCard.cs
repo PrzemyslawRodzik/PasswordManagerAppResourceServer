@@ -28,6 +28,17 @@ namespace PasswordManagerAppResourceServer.Models
         [Column("expiration_date")]
         public string ExpirationDate { get; set; }
 
+
+
+
+
+
+            
+
+
+
+
+
         
 
     }

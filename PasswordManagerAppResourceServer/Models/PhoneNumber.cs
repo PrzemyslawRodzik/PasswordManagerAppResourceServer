@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PasswordManagerAppResourceServer.Models
 {   [Table("phone_number")]
-    public class PhoneNumber
+    public class PhoneNumber: PersonalModel
     {
         [Key]
         public int Id { get; set; }
@@ -20,9 +20,7 @@ namespace PasswordManagerAppResourceServer.Models
         [Required]
         [Column("type")]
         public string Type { get; set; }
-        [Column("personal_info_id")]
-        public int PersonalInfoId { get; set; }
-        public PersonalInfo PersonalInfo { get; set; }
+        
 
 
     }

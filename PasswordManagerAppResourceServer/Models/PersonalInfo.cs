@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 namespace PasswordManagerAppResourceServer.Models
 {
     [Table("personal_info")]
-    public class PersonalInfo
+    public class PersonalInfo:UserRelationshipModel
     {
         [Key]
         public int Id { get; set; }
@@ -25,13 +25,6 @@ namespace PasswordManagerAppResourceServer.Models
         [Column("date_of_birth",TypeName ="Date")]
         public DateTime DateOfBirth { get; set; }
 
-
-
-
-        [ForeignKey(nameof(User))]
-        [Column("user_id")]
-        public int UserId { get; set; }
-        public User User { get; set; }
 
         public ICollection<Address> Addresses { get; set; }
         public ICollection<PhoneNumber> PhoneNumbers { get; set; }

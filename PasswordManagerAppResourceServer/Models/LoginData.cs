@@ -7,7 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace PasswordManagerAppResourceServer.Models
 {
     [Table("login_data")]
-    public class LoginData: UserRelationshipModel,ICompromisedEntity
+    public class LoginData: UserRelationshipModel,ICompromisedEntity,IPasswordModel
     {
 
         [Key]
