@@ -148,6 +148,10 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("name")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("OutOfDate")
+                        .HasColumnName("out-of-date")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Password")
                         .IsRequired()
                         .HasColumnName("password")

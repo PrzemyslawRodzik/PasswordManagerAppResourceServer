@@ -4,7 +4,7 @@ using PasswordManagerAppResourceServer.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Threading.Tasks;
 
 namespace PasswordManagerAppResourceServer.Data
 {
@@ -66,7 +66,7 @@ namespace PasswordManagerAppResourceServer.Data
                 return 0;
             }
         }
-        public int GetDataBreachCountForUser<TEntity>(User user) where TEntity : UserRelationshipModel,ICompromisedEntity
+        public int GetDataBreachCountForUser<TEntity>(User user) where TEntity : UserRelationshipModel,ICompromisedModel
         {
             try
             {
@@ -80,14 +80,10 @@ namespace PasswordManagerAppResourceServer.Data
 
         public List<T> GetAllUserData<T>(int userId) where T:UserRelationshipModel
         {
-            try
-            {
+           
                 return ApplicationDbContext.Set<T>().Where(tt => tt.UserId == userId).ToList();
-            }
-            catch (Exception)
-            {
-                return null;
-            }
+            
+            
             
         }
         public List<T> GetAllUserPhonesOrAddresses<T>(int userId) where T : PersonalModel
@@ -108,17 +104,32 @@ namespace PasswordManagerAppResourceServer.Data
 
         }
 
+        public List<LoginData> GetOutOfDateLoginsForUser(int userId)
+        {
+            var logins = GetAllUserData<LoginData>(userId);
+            if (logins is null)
+                return null;
+             var newOutOfDateLogins = logins.Where(x => (DateTime.UtcNow.ToLocalTime() - x.ModifiedDate).Days >= 30  && x.OutOfDate==0  ).ToList();
+            
+            if (newOutOfDateLogins is null)
+                return null;
+            UpdateOutOfDateLogins(newOutOfDateLogins);
+            return newOutOfDateLogins;
+        }
+        private int UpdateOutOfDateLogins(List<LoginData> outOfDateLogins)
+        {
+            foreach (LoginData login in outOfDateLogins)
+                login.OutOfDate = 1;
+            ApplicationDbContext.LoginDatas.UpdateRange(outOfDateLogins);
+            return ApplicationDbContext.SaveChanges();
+        }
+        
+        
+
 
 
 
 
     }
-    public interface ICompromisedEntity
-    {
-        
-        public int Compromised { get; set; }
-        
-
-
-    }
+    
 }

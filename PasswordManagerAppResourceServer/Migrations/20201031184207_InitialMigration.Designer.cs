@@ -9,7 +9,7 @@ using PasswordManagerAppResourceServer.Models;
 namespace PasswordManagerAppResourceServer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20201029213439_InitialMigration")]
+    [Migration("20201031184207_InitialMigration")]
     partial class InitialMigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -149,6 +149,10 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .IsRequired()
                         .HasColumnName("name")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("OutOfDate")
+                        .HasColumnName("out-of-date")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Password")
                         .IsRequired()

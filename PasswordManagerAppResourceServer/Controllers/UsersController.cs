@@ -31,7 +31,7 @@ namespace PasswordManagerAppResourceServer.Controllers
         {
             return Int32.Parse(HttpContext.User.Identity.Name);
         }
-
+        [AllowAnonymous]
         [HttpGet("getauthuser")]
         public ActionResult<UserDto> GetAuthUser()
         {
@@ -156,6 +156,15 @@ namespace PasswordManagerAppResourceServer.Controllers
                 + request.IpAddress + ", system : " 
                 + request.OSName + " " + request.BrowserName + " dnia " 
                 + DateTime.UtcNow.ToLocalTime().ToString("yyyy-MM-dd' 'HH:mm:ss") + "."));
+            return Ok();
+        }
+
+        [AllowAnonymous]
+        [HttpPost("update-password-status")]
+        public IActionResult UpdatePasswordStatus([FromBody]PasswordStatusUpdate request)
+        {
+
+            _userService.UpdatePasswordStatus(request.UserId, request.Compromised);
             return Ok();
         }
 

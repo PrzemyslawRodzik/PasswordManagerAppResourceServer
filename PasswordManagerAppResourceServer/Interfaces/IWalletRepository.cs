@@ -11,10 +11,12 @@ namespace PasswordManagerAppResourceServer.Interfaces
         IEnumerable<LoginData> GetAllLoginDataBreach();
         IEnumerable<PaypalAccount> GetAllPaypallBreach();
         int GetDataCountForUser<TEntity>(User user) where TEntity : UserRelationshipModel;
-        int GetDataBreachCountForUser<TEntity>(User user) where TEntity : UserRelationshipModel, ICompromisedEntity;
+        int GetDataBreachCountForUser<TEntity>(User user) where TEntity : UserRelationshipModel, ICompromisedModel;
         IEnumerable<LoginData> GetUnchangedPasswordsForUser(int userId);
 
         List<T> GetAllUserData<T>(int userId) where T : UserRelationshipModel;
         List<T> GetAllUserPhonesOrAddresses<T>(int userId) where T : PersonalModel;
+        List<LoginData> GetOutOfDateLoginsForUser(int userId);
+        
     }
 }

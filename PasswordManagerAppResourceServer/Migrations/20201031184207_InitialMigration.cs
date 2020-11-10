@@ -93,6 +93,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                     password = table.Column<string>(nullable: false),
                     website = table.Column<string>(nullable: true),
                     compromised = table.Column<int>(nullable: false),
+                    outofdate = table.Column<int>(name: "out-of-date", nullable: false),
                     modified_date = table.Column<DateTime>(nullable: false)
                 },
                 constraints: table =>

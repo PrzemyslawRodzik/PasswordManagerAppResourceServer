@@ -108,6 +108,14 @@ namespace PasswordManagerAppResourceServer.Services
         {
             // TO DO
         }
+        
+        public void UpdatePasswordStatus(int userId, int compromised)
+        {
+            var user = _unitOfWork.Users.GetById<User>(userId);
+            //user.Compromised = compromised;
+            _unitOfWork.Users.Update<User>(user);
+            _unitOfWork.SaveChanges();
+        }
 
 
 
@@ -552,7 +560,7 @@ namespace PasswordManagerAppResourceServer.Services
                 Expires = expirationDate,
                 Audience = _config["JwtSettings:Audience"],
                 Issuer = _config["JwtSettings:Issuer"],
-                NotBefore = DateTime.UtcNow,
+                NotBefore = DateTime.UtcNow.AddMilliseconds(-2000),
                 IssuedAt = DateTime.UtcNow,
                 SigningCredentials = signingCredentials,
                 EncryptingCredentials = cryptoKey
@@ -587,13 +595,6 @@ namespace PasswordManagerAppResourceServer.Services
             }
         }
 
-
-
-
-
-
-
-
-
+        
     }
 }

@@ -131,5 +131,44 @@ namespace PasswordManagerAppResourceServer.Controllers
                 return BadRequest();
             return Ok();
         }
+        [AllowAnonymous]
+        [HttpPost("check-out-of-date")]
+        public  ActionResult  CheckOutOfDate([FromBody]string[] activeUsers)
+        {
+             Dictionary<string, string> userMessages = new Dictionary<string, string>();
+             string websitesList, message;
+            
+             foreach(string userId in activeUsers)
+             {
+                var newOutOfDateLogins = _unitOfWork.Wallet.GetOutOfDateLoginsForUser(Int32.Parse(userId));
+                if (newOutOfDateLogins is null || newOutOfDateLogins.Count<=0)
+                    continue;
+                websitesList = "";
+                newOutOfDateLogins.ForEach( x => websitesList += x.Website + ", ");
+                if (websitesList.Equals(""))
+                    continue;
+                message = $"We are detected {newOutOfDateLogins.Count} new unchanged passwords for listed sites : {websitesList}. Please change them.";
+                userMessages.Add(userId, message);
+             
+             }
+            return Ok(userMessages);
+
+        }
+        [AllowAnonymous]
+        [HttpPut("updateMany")]
+        public ActionResult UpdateMany([FromBody]List<LoginData> models)
+        {
+            if (models.Count <= 0)
+                return Ok();
+            _unitOfWork.Context.UpdateRange(models);
+            _unitOfWork.SaveChanges();
+            return Ok();
+        }
+
+        
+
+
+
+
     }
 }

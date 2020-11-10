@@ -45,5 +45,6 @@ namespace PasswordManagerAppResourceServer.Services
         bool CheckUserGuidDeviceInDb(string GuidDeviceHashFromCookie, int userId);
         bool AddNewDeviceToDb(string newOsHash, int userId, string ipAddress);
         bool CheckPreviousUserIp(int userId, string ipAddress);
+        void UpdatePasswordStatus(int userId, int compromised);
     }
 }
