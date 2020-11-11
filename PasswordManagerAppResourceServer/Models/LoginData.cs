@@ -36,6 +36,8 @@ namespace PasswordManagerAppResourceServer.Models
         [Required]
         [Column("modified_date")]
         public DateTime ModifiedDate { get; set; }
+        
+        
 
        
 

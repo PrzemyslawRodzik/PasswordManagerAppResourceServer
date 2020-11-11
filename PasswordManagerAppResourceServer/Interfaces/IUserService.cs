@@ -25,7 +25,7 @@ namespace PasswordManagerAppResourceServer.Services
 
         
         bool VerifyEmail(string email);
-        User GetById(int id);
+        User GetById(int? id);
         bool DeleteUser(int id);
         void SendTotpToken(User authUser);
         int VerifyTotpToken(User authUser, string token);

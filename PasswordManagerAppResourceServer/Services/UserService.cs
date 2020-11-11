@@ -153,10 +153,11 @@ namespace PasswordManagerAppResourceServer.Services
 
 
 
-        public User GetById(int id)
+        public User GetById(int? id)
         {   
-            
-            return _unitOfWork.Users.Find<User>(id);
+            if(id is null)
+                return null;
+            return _unitOfWork.Users.Find<User>((int)id);
             
         }
 

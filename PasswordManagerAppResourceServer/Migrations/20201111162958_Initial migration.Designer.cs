@@ -9,8 +9,8 @@ using PasswordManagerAppResourceServer.Models;
 namespace PasswordManagerAppResourceServer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20201031184207_InitialMigration")]
-    partial class InitialMigration
+    [Migration("20201111162958_Initial migration")]
+    partial class Initialmigration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -111,7 +111,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("security_code")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnName("user_id")
                         .HasColumnType("INTEGER");
 
@@ -159,7 +159,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("password")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnName("user_id")
                         .HasColumnType("INTEGER");
 
@@ -190,7 +190,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("Name")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnName("user_id")
                         .HasColumnType("INTEGER");
 
@@ -230,7 +230,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("password")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnName("user_id")
                         .HasColumnType("INTEGER");
 
@@ -263,7 +263,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("second_name")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnName("user_id")
                         .HasColumnType("INTEGER");
 
@@ -325,7 +325,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("start_date")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnName("user_id")
                         .HasColumnType("INTEGER");
 
@@ -357,7 +357,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("token")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnName("user_id")
                         .HasColumnType("INTEGER");
 
@@ -430,7 +430,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("ip_address")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
+                    b.Property<int?>("UserId")
                         .HasColumnName("user_id")
                         .HasColumnType("INTEGER");
 
@@ -485,45 +485,35 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithMany("CreditCards")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.LoginData", b =>
                 {
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithMany("LoginDatas")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.Note", b =>
                 {
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithMany("Notes")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.PaypalAccount", b =>
                 {
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithMany("PaypallAcounts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.PersonalInfo", b =>
                 {
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithOne("PersonalInfo")
-                        .HasForeignKey("PasswordManagerAppResourceServer.Models.PersonalInfo", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("PasswordManagerAppResourceServer.Models.PersonalInfo", "UserId");
                 });
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.PhoneNumber", b =>
@@ -545,27 +535,21 @@ namespace PasswordManagerAppResourceServer.Migrations
 
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithMany("SharedLoginDatas")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.Totp_user", b =>
                 {
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithMany("Totp_Users")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.UserDevice", b =>
                 {
                     b.HasOne("PasswordManagerAppResourceServer.Models.User", "User")
                         .WithMany("UserDevices")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId");
                 });
 #pragma warning restore 612, 618
         }

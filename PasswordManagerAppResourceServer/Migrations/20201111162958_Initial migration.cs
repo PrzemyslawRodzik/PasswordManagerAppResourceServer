@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PasswordManagerAppResourceServer.Migrations
 {
-    public partial class InitialMigration : Migration
+    public partial class Initialmigration : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -62,7 +62,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<int>(nullable: false),
+                    user_id = table.Column<int>(nullable: true),
                     name = table.Column<string>(nullable: false),
                     cardholder_name = table.Column<string>(nullable: false),
                     card_number = table.Column<string>(nullable: false),
@@ -77,7 +77,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -86,7 +86,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<int>(nullable: false),
+                    user_id = table.Column<int>(nullable: true),
                     name = table.Column<string>(nullable: false),
                     email = table.Column<string>(nullable: true),
                     login = table.Column<string>(nullable: false),
@@ -104,7 +104,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -113,7 +113,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<int>(nullable: false),
+                    user_id = table.Column<int>(nullable: true),
                     Name = table.Column<string>(nullable: false),
                     Details = table.Column<string>(nullable: false)
                 },
@@ -125,7 +125,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -134,7 +134,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<int>(nullable: false),
+                    user_id = table.Column<int>(nullable: true),
                     name = table.Column<string>(nullable: false),
                     email = table.Column<string>(nullable: false),
                     password = table.Column<string>(nullable: false),
@@ -149,7 +149,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -158,7 +158,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<int>(nullable: false),
+                    user_id = table.Column<int>(nullable: true),
                     name = table.Column<string>(nullable: true),
                     second_name = table.Column<string>(nullable: true),
                     last_name = table.Column<string>(nullable: true),
@@ -172,7 +172,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -181,7 +181,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<int>(nullable: false),
+                    user_id = table.Column<int>(nullable: true),
                     token = table.Column<string>(nullable: false),
                     create_date = table.Column<DateTime>(nullable: false),
                     expire_date = table.Column<DateTime>(nullable: false)
@@ -194,7 +194,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -203,7 +203,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<int>(nullable: false),
+                    user_id = table.Column<int>(nullable: true),
                     device_guid = table.Column<string>(nullable: false),
                     ip_address = table.Column<string>(nullable: false),
                     authorized = table.Column<int>(nullable: false)
@@ -216,7 +216,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -225,7 +225,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 {
                     Id = table.Column<int>(nullable: false)
                         .Annotation("Sqlite:Autoincrement", true),
-                    user_id = table.Column<int>(nullable: false),
+                    user_id = table.Column<int>(nullable: true),
                     login_data_id = table.Column<int>(nullable: false),
                     start_date = table.Column<DateTime>(nullable: false),
                     end_date = table.Column<DateTime>(nullable: false)
@@ -244,7 +244,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                         column: x => x.user_id,
                         principalTable: "user",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
+                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(

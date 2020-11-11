@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using PasswordManagerAppResourceServer.Dtos;
 using PasswordManagerAppResourceServer.Interfaces;
 using PasswordManagerAppResourceServer.Models;
+using PasswordManagerAppResourceServer.Responses;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -81,6 +82,7 @@ namespace PasswordManagerAppResourceServer.Controllers
             return NotFound();
         }
         // POST api/logindatas
+        [AllowAnonymous]
         [HttpPost]
         public ActionResult<LoginDataDto> CreateLoginData([FromBody] LoginDataDto loginDataDto)
         {
@@ -163,6 +165,38 @@ namespace PasswordManagerAppResourceServer.Controllers
             _unitOfWork.Context.UpdateRange(models);
             _unitOfWork.SaveChanges();
             return Ok();
+        }
+
+        [AllowAnonymous]
+        [HttpPost("share")]
+        public ActionResult ShareLoginData([FromBody]ShareLoginModel model)
+        { 
+           var receiver = _unitOfWork.Context.Users.FirstOrDefault(x=>x.Email.Equals(model.ReceiverEmail));
+            if(receiver is null)
+                return Ok(new ApiResponse{
+                    Success = false,
+                    Messages = new string[]{"User with this email does not exist!"}
+                });
+            _unitOfWork.Context.LoginDatas.Add(model.LoginData);
+            _unitOfWork.SaveChanges();
+            var sharedLoginData = _unitOfWork.Context.LoginDatas.FirstOrDefault(x=>x.Name.Equals(model.LoginData.Name));
+            _unitOfWork.Context.SharedLoginsData.Add(new SharedLoginData{
+                LoginDataId = sharedLoginData.Id,
+                UserId = receiver.Id,
+                StartDate = model.StartDate,
+                EndDate= model.EndDate
+
+            });
+            _unitOfWork.SaveChanges();
+            return  Ok(new ApiResponse
+            {
+                Success = true,
+                Messages = new string[] {$"This login data is now available for {receiver.Email}"}
+            });
+
+
+
+            
         }
 
         

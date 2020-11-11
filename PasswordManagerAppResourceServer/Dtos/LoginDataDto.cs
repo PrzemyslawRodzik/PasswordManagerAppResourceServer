@@ -33,7 +33,7 @@ namespace PasswordManagerAppResourceServer.Dtos
         
         public DateTime ModifiedDate { get; set; }
         [Required]
-        public int UserId { get; set; }
+        public int? UserId { get; set; }
 
         
 
