@@ -89,6 +89,7 @@ namespace PasswordManagerAppResourceServer.Controllers
         {
             var paypalAccount = _mapper.Map<PaypalAccount>(paypalAccountDto);
             paypalAccount.User = _unitOfWork.Users.Find<User>(GetUserIdFromJwtToken());
+            paypalAccount.ModifiedDate = DateTime.UtcNow;
             _unitOfWork.Context.PaypalAccounts.Add(paypalAccount);
             _unitOfWork.SaveChanges();
 
@@ -107,7 +108,7 @@ namespace PasswordManagerAppResourceServer.Controllers
                 return NotFound();
 
             _mapper.Map(paypalAccountDto, paypalAccountFromDb);
-
+            paypalAccountFromDb.ModifiedDate = DateTime.UtcNow;
             _unitOfWork.Context.PaypalAccounts.Update(paypalAccountFromDb);
             _unitOfWork.SaveChanges();
 

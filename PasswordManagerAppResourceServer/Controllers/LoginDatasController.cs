@@ -198,6 +198,31 @@ namespace PasswordManagerAppResourceServer.Controllers
 
             
         }
+        [AllowAnonymous]
+        [HttpGet("share")]
+        public ActionResult GetSharedLoginData([FromQuery] int? userId)
+        { 
+            if(userId is null)
+            return NoContent();
+            var date = DateTime.UtcNow.ToLocalTime();
+           var sharedLoginTable = _unitOfWork.Context.SharedLoginsData.Where(x=>x.UserId==userId && x.EndDate>date);
+           if(sharedLoginTable is null)
+                return NoContent();
+            List<SharedLoginModel> sharedLogins = new List<SharedLoginModel>();
+            foreach(var record in sharedLoginTable)
+            {
+                var loginDto = _mapper.Map<LoginDataDto>(_unitOfWork.Context.LoginDatas.FirstOrDefault(a=>a.Id==record.LoginDataId));
+                sharedLogins.Add(new SharedLoginModel{
+                    LoginData = loginDto,
+                    StartDate = record.StartDate,
+                    EndDate = record.EndDate
+                });
+
+                
+
+            }
+            return Ok(sharedLogins);
+        }
 
         
 
