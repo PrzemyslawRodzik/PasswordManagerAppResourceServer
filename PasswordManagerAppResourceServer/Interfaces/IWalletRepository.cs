@@ -17,6 +17,6 @@ namespace PasswordManagerAppResourceServer.Interfaces
         List<T> GetAllUserData<T>(int userId) where T : UserRelationshipModel;
         List<T> GetAllUserPhonesOrAddresses<T>(int userId) where T : PersonalModel;
         List<LoginData> GetOutOfDateLoginsForUser(int userId);
-        
+        IEnumerable<PaypalAccount> GetUnchangedPaypalPasswordsForUser(int userId);
     }
 }

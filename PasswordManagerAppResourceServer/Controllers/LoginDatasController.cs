@@ -48,17 +48,19 @@ namespace PasswordManagerAppResourceServer.Controllers
         [AllowAnonymous]
         [HttpGet]
         public ActionResult<IEnumerable<LoginData>> GetAllLoginDatas([FromQuery] int? userId, 
-        [FromQuery]int?compromised)
+        [FromQuery]int?compromised,[FromQuery]int?expired)
         {
             List<LoginData> logins = null;
-            if (userId  is null &&  compromised is null)
+            if (userId is null && compromised is null)
                 logins = _unitOfWork.Context.LoginDatas.ToList();
-            else if(userId!=null && compromised is null)
+            else if (userId != null && expired == 1)
+                logins = _unitOfWork.Wallet.GetUnchangedPasswordsForUser(userId.Value).ToList();
+            else if (userId != null && compromised is null)
                 logins = _unitOfWork.Context.LoginDatas.
                 Where(x => x.UserId == userId).ToList();
-            else if(userId != null && compromised==1)
+            else if (userId != null && compromised == 1)
                 logins = _unitOfWork.Context.LoginDatas.
-                Where(x => x.UserId == userId && x.Compromised==1).ToList();
+                Where(x => x.UserId == userId && x.Compromised == 1).ToList();
             else if (userId != null && compromised == 0)
                 logins = _unitOfWork.Context.LoginDatas.
                 Where(x => x.UserId == userId && x.Compromised == 0).ToList();

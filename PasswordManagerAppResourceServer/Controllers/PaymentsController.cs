@@ -46,11 +46,13 @@ namespace PasswordManagerAppResourceServer.Controllers
         // GET: api/paypalaccounts
         [HttpGet("paypalaccounts")]
         public ActionResult<IEnumerable<PaypalAccountDto>> GetAllPaypalAccounts([FromQuery] int? userId,
-        [FromQuery] int? compromised)
+        [FromQuery] int? compromised,[FromQuery] int? expired)
         {
             List<PaypalAccount> paypalAccounts = null;
             if (userId is null && compromised is null)
                 paypalAccounts = _unitOfWork.Context.PaypalAccounts.ToList();
+            else if (userId != null && expired == 1)
+                paypalAccounts = _unitOfWork.Wallet.GetUnchangedPaypalPasswordsForUser(userId.Value).ToList();
             else if (userId != null && compromised is null)
                 paypalAccounts = _unitOfWork.Context.PaypalAccounts.
                 Where(x => x.UserId == userId).ToList();

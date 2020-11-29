@@ -123,13 +123,14 @@ namespace PasswordManagerAppResourceServer.Data
             ApplicationDbContext.LoginDatas.UpdateRange(outOfDateLogins);
             return ApplicationDbContext.SaveChanges();
         }
-        
-        
 
+        public IEnumerable<PaypalAccount> GetUnchangedPaypalPasswordsForUser(int userId)
+        {
+            var allpaypalList = ApplicationDbContext.PaypalAccounts.Where(x => x.UserId == userId).ToList();
+            var paypalList = allpaypalList.Where(x => (DateTime.UtcNow.ToLocalTime() - x.ModifiedDate).Days >= 30).ToList();
 
-
-
-
+            return paypalList;
+        }
     }
     
 }
