@@ -20,6 +20,9 @@ namespace PasswordManagerAppResourceServer.Models
         [Required]
         [Column("street")]
         public string Street { get; set; }
+        [Required]
+        [Column("street_number")]
+        public string StreetNumber { get; set; }
 
         [Required]
         [Column("zip_code")]
@@ -29,9 +32,7 @@ namespace PasswordManagerAppResourceServer.Models
         [Column("city")]
         public string City { get; set; }
 
-        [Required]
-        [Column("country")]
-        public string Country { get; set; }
+        
 
         
 

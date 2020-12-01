@@ -21,7 +21,6 @@ namespace PasswordManagerAppResourceServer.Models
         public virtual DbSet<PersonalInfo> PersonalInfos { get; set; }
         public virtual DbSet<PhoneNumber> PhoneNumbers { get; set; }
         public virtual DbSet<VisitorAgent> VisitorAgents { get; set; }
-        public virtual DbSet<BreachedPassword> BreachedPasswords { get; set; }
         public virtual DbSet<SharedLoginData> SharedLoginsData { get; set; }
         
 

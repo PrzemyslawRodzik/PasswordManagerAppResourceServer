@@ -32,11 +32,6 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .HasColumnName("city")
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Country")
-                        .IsRequired()
-                        .HasColumnName("country")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("PersonalInfoId")
                         .HasColumnName("personal_info_id")
                         .HasColumnType("INTEGER");
@@ -44,6 +39,11 @@ namespace PasswordManagerAppResourceServer.Migrations
                     b.Property<string>("Street")
                         .IsRequired()
                         .HasColumnName("street")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("StreetNumber")
+                        .IsRequired()
+                        .HasColumnName("street_number")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ZipCode")
@@ -56,26 +56,6 @@ namespace PasswordManagerAppResourceServer.Migrations
                     b.HasIndex("PersonalInfoId");
 
                     b.ToTable("address");
-                });
-
-            modelBuilder.Entity("PasswordManagerAppResourceServer.Models.BreachedPassword", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("Occuring")
-                        .HasColumnName("occuring")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Password")
-                        .IsRequired()
-                        .HasColumnName("password")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("breached_password");
                 });
 
             modelBuilder.Entity("PasswordManagerAppResourceServer.Models.CreditCard", b =>
@@ -372,12 +352,12 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<int>("Admin")
-                        .HasColumnName("admin")
-                        .HasColumnType("INTEGER");
-
                     b.Property<int>("AuthenticationTime")
                         .HasColumnName("authentication_time")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Compromised")
+                        .HasColumnName("compromised")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Email")

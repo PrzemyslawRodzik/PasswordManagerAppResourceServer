@@ -44,12 +44,18 @@ namespace PasswordManagerAppResourceServer.Controllers
         
         // GET: api/phonenumbers
         [HttpGet]
-        public ActionResult<IEnumerable<PhoneNumberDto>> GetAllPhoneNumbers()
+        public ActionResult<IEnumerable<PhoneNumberDto>> GetAllPhoneNumbers([FromQuery]int? userId)
         {
             List<PhoneNumber> phoneNumbers = null;
+            if(userId is null)
+                phoneNumbers = _unitOfWork.Context.PhoneNumbers.ToList();
+            else if (userId!=null)
+            {
+                var id = _unitOfWork.Context.PersonalInfos.FirstOrDefault(x => x.UserId == userId).Id;
+                phoneNumbers = _unitOfWork.Context.PhoneNumbers.Where(x => x.PersonalInfoId == id).ToList();
+            }
+                
 
-            phoneNumbers = _unitOfWork.Context.PhoneNumbers.ToList();
-           
 
             if (phoneNumbers.Count <= 0)
                 return NoContent();
@@ -80,6 +86,7 @@ namespace PasswordManagerAppResourceServer.Controllers
         public ActionResult<PhoneNumberDto> CreatePhoneNumber([FromBody] PhoneNumberDto phoneNumberDto)
         {
             var phoneNumber = _mapper.Map<PhoneNumber>(phoneNumberDto);
+            phoneNumber.PersonalInfoId = _unitOfWork.Context.PersonalInfos.FirstOrDefault(x => x.UserId == phoneNumberDto.UserId).Id;
             phoneNumber.PersonalInfo = _unitOfWork.Context.PersonalInfos.FirstOrDefault(x => x.Id ==phoneNumber.PersonalInfoId);
             _unitOfWork.Context.PhoneNumbers.Add(phoneNumber);
             _unitOfWork.SaveChanges();
@@ -97,7 +104,7 @@ namespace PasswordManagerAppResourceServer.Controllers
             var phoneNumberFromDb = _unitOfWork.Context.PhoneNumbers.Find(id);
             if (phoneNumberFromDb is null)
                 return NotFound();
-
+            phoneNumberDto.PersonalInfoId = _unitOfWork.Context.PersonalInfos.FirstOrDefault(x => x.UserId == phoneNumberDto.UserId).Id;
             _mapper.Map(phoneNumberDto, phoneNumberFromDb);
             
             _unitOfWork.Context.PhoneNumbers.Update(phoneNumberFromDb);

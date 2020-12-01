@@ -77,7 +77,6 @@ namespace PasswordManagerAppResourceServer.Services
                 TwoFactorAuthorization = 0,
                 PasswordNotifications = 1,
                 AuthenticationTime = 5,
-                Admin = 0
             };
             _unitOfWork.Users.Add<User>(user);
             _unitOfWork.SaveChanges();
@@ -553,7 +552,6 @@ namespace PasswordManagerAppResourceServer.Services
                   {
                      new Claim(ClaimTypes.Name,user.Id.ToString()), 
                      new Claim(ClaimTypes.Email,user.Email),
-                     new Claim("Admin", user.Admin.ToString()),
                      new Claim("TwoFactorAuth", user.TwoFactorAuthorization.ToString()),
                      new Claim("PasswordNotifications", user.PasswordNotifications.ToString()),
                      new Claim("AuthTime", user.AuthenticationTime.ToString()),

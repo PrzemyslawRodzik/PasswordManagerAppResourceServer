@@ -44,10 +44,14 @@ namespace PasswordManagerAppResourceServer.Controllers
 
         // GET: api/personalinfos
         [HttpGet("personalinfos")]
-        public ActionResult<IEnumerable<PersonalInfoDto>> GetAllProfiles()
+        public ActionResult<IEnumerable<PersonalInfoDto>> GetAllProfiles(int? userId)
         {
             List<PersonalInfo> profiles = null;
-            profiles = _unitOfWork.Context.PersonalInfos.ToList();
+
+            if (userId is null)
+                profiles = _unitOfWork.Context.PersonalInfos.ToList();
+            else if (userId != null)
+                profiles = _unitOfWork.Context.PersonalInfos.Where(x => x.UserId == userId).ToList();
             if (profiles.Count <= 0)
                 return NoContent();
              var profilesDto = _mapper.Map<IEnumerable<PersonalInfoDto>>(profiles);

@@ -18,6 +18,9 @@ namespace PasswordManagerAppResourceServer.Dtos
         [Required]
         
         public string Street { get; set; }
+        [Required]
+
+        public string StreetNumber { get; set; }
 
         [Required]
         
@@ -27,11 +30,10 @@ namespace PasswordManagerAppResourceServer.Dtos
         
         public string City { get; set; }
 
-        [Required]
-        
-        public string Country { get; set; }
+       
 
         public int PersonalInfoId { get; set; }
+        public int UserId { get; set; }
         
 
 

@@ -41,23 +41,25 @@ namespace PasswordManagerAppResourceServer.Controllers
             }
 
         }
+
         
-        // GET: api/address
         [HttpGet("addresss")]
-        public ActionResult<IEnumerable<AddressDto>> GetAllAddresses()
+
+        public ActionResult<IEnumerable<AddressDto>> GetAllAddresses([FromQuery] int? userId)
         {
             List<Address> addresses = null;
-
-            addresses = _unitOfWork.Context.Addresses.ToList();
-           
-
+            if (userId is null)
+                addresses = _unitOfWork.Context.Addresses.ToList();
+            else if (userId != null)
+            {
+                var id = _unitOfWork.Context.PersonalInfos.FirstOrDefault(x => x.UserId == userId).Id;
+                addresses = _unitOfWork.Context.Addresses.Where(x => x.PersonalInfoId == id).ToList();
+            }
             if (addresses.Count <= 0)
                 return NoContent();
 
             var addressesDto = _mapper.Map<IEnumerable<AddressDto>>(addresses);
             return Ok(addressesDto);
-
-
         }
 
         // GET api/addresss/5
@@ -80,6 +82,7 @@ namespace PasswordManagerAppResourceServer.Controllers
         public ActionResult<AddressDto> CreateAddress([FromBody] AddressDto addressDto)
         {
             var address = _mapper.Map<Address>(addressDto);
+            address.PersonalInfoId = _unitOfWork.Context.PersonalInfos.FirstOrDefault(x => x.UserId == addressDto.UserId).Id;
             address.PersonalInfo = _unitOfWork.Context.PersonalInfos.FirstOrDefault(x => x.UserId == GetUserIdFromJwtToken());
             _unitOfWork.Context.Addresses.Add(address);
             _unitOfWork.SaveChanges();
@@ -97,7 +100,7 @@ namespace PasswordManagerAppResourceServer.Controllers
             var addressFromDb = _unitOfWork.Context.Addresses.Find(id);
             if (addressFromDb is null)
                 return NotFound();
-
+            addressDto.PersonalInfoId = _unitOfWork.Context.PersonalInfos.FirstOrDefault(x => x.UserId == addressDto.UserId).Id;
             _mapper.Map(addressDto, addressFromDb);
             
             _unitOfWork.Context.Addresses.Update(addressFromDb);

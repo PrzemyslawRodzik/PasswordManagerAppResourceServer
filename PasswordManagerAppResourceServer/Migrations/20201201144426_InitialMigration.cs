@@ -3,24 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PasswordManagerAppResourceServer.Migrations
 {
-    public partial class Initialmigration : Migration
+    public partial class InitialMigration : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.CreateTable(
-                name: "breached_password",
-                columns: table => new
-                {
-                    Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
-                    password = table.Column<string>(nullable: false),
-                    occuring = table.Column<long>(nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_breached_password", x => x.Id);
-                });
-
             migrationBuilder.CreateTable(
                 name: "user",
                 columns: table => new
@@ -29,9 +15,9 @@ namespace PasswordManagerAppResourceServer.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     email = table.Column<string>(nullable: false),
                     master_password = table.Column<string>(nullable: false),
+                    compromised = table.Column<int>(nullable: false),
                     password_salt = table.Column<string>(nullable: false),
                     two_factor_authorization = table.Column<int>(nullable: false),
-                    admin = table.Column<int>(nullable: false),
                     password_notifications = table.Column<int>(nullable: false),
                     authentication_time = table.Column<int>(nullable: false)
                 },
@@ -256,9 +242,9 @@ namespace PasswordManagerAppResourceServer.Migrations
                     personal_info_id = table.Column<int>(nullable: false),
                     address_name = table.Column<string>(nullable: false),
                     street = table.Column<string>(nullable: false),
+                    street_number = table.Column<string>(nullable: false),
                     zip_code = table.Column<string>(nullable: false),
-                    city = table.Column<string>(nullable: false),
-                    country = table.Column<string>(nullable: false)
+                    city = table.Column<string>(nullable: false)
                 },
                 constraints: table =>
                 {
@@ -354,9 +340,6 @@ namespace PasswordManagerAppResourceServer.Migrations
         {
             migrationBuilder.DropTable(
                 name: "address");
-
-            migrationBuilder.DropTable(
-                name: "breached_password");
 
             migrationBuilder.DropTable(
                 name: "credit_card");

@@ -16,15 +16,15 @@ namespace PasswordManagerAppResourceServer.Models
         [Column("master_password")]
 
         public string Password { get; set; }
+        
+        [Column("compromised")]
+        public int Compromised { get; set; }
         [Required]
         [Column("password_salt")]
         public string PasswordSalt { get; set; }
         [Required]
         [Column("two_factor_authorization")]
         public int TwoFactorAuthorization { get; set; }
-        [Required]
-        [Column("admin")]
-        public int Admin { get; set; }
         [Required]
         [Column("password_notifications")]
         public int PasswordNotifications { get; set; }
