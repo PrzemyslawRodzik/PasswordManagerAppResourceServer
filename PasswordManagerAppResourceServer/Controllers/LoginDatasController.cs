@@ -23,10 +23,13 @@ namespace PasswordManagerAppResourceServer.Controllers
     {
         private readonly IMapper _mapper;
         private readonly IUnitOfWork _unitOfWork;
-        public LoginDatasController(IMapper mapper, IUnitOfWork unitOfWork)
+        private readonly ApplicationDbContext _db;
+
+        public LoginDatasController(IMapper mapper, IUnitOfWork unitOfWork,ApplicationDbContext db)
         {
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _db = db;
         }
         
 
@@ -205,15 +208,17 @@ namespace PasswordManagerAppResourceServer.Controllers
         public ActionResult GetSharedLoginData([FromQuery] int? userId)
         { 
             if(userId is null)
-            return NoContent();
-            var date = DateTime.UtcNow.ToLocalTime();
-           var sharedLoginTable = _unitOfWork.Context.SharedLoginsData.Where(x=>x.UserId==userId && x.EndDate>date);
-           if(sharedLoginTable is null)
+                return NoContent();
+           var date = DateTime.UtcNow.ToLocalTime();
+            var sharedLoginTable = _unitOfWork.Context.SharedLoginsData.Where(x => x.UserId == userId && x.EndDate > date).ToList();
+            
+            if (sharedLoginTable is null)
                 return NoContent();
             List<SharedLoginModel> sharedLogins = new List<SharedLoginModel>();
             foreach(var record in sharedLoginTable)
             {
-                var loginDto = _mapper.Map<LoginDataDto>(_unitOfWork.Context.LoginDatas.FirstOrDefault(a=>a.Id==record.LoginDataId));
+                var login = _unitOfWork.Context.LoginDatas.FirstOrDefault(a => a.Id == record.LoginDataId);
+                var loginDto = _mapper.Map<LoginDataDto>(login);
                 sharedLogins.Add(new SharedLoginModel{
                     LoginData = loginDto,
                     StartDate = record.StartDate,
@@ -225,8 +230,60 @@ namespace PasswordManagerAppResourceServer.Controllers
             }
             return Ok(sharedLogins);
         }
+        [AllowAnonymous]
+        [HttpGet("share/export")]
+        public ActionResult GetSharedExportedLoginData([FromQuery] int? userId)
+        {
+            if (userId is null)
+                return NoContent();
+            var user = _unitOfWork.Users.Find<User>(userId.Value);
+            var date = DateTime.UtcNow.ToLocalTime();
+            var sharedLogins = _unitOfWork.Context.LoginDatas.Where(x => x.Name.Contains($"From {user.Email}")).ToList();
+            
+            if (sharedLogins is null)
+                return NoContent();
+            List<ShareLoginModelResponse> exportedLogins = new List<ShareLoginModelResponse>();
+            foreach (var sharedLogin in sharedLogins)
+            {
+                var record = _unitOfWork.Context.SharedLoginsData.FirstOrDefault(x => x.LoginDataId == sharedLogin.Id && x.EndDate > date);
+                
+                if (record != null)
+                    {
+                        sharedLogin.UserId = 0;
+                        exportedLogins.Add(
+                            new ShareLoginModelResponse
+                            {
+                                LoginData = _mapper.Map<LoginDataDto>(sharedLogin),
+                                ReceiverEmail = _unitOfWork.Users.Find<User>(record.UserId.Value).Email,
+                                StartDate = record.StartDate,
+                                EndDate = record.EndDate
+                            }
+                           );
+                    }
+            }
 
-        
+            return Ok(exportedLogins);
+        }
+
+
+
+
+        [HttpDelete("share/{id}")]
+        public ActionResult DeleteShareLoginData(int id)
+        {
+            var loginData = _unitOfWork.Context.LoginDatas.Find(id);
+            
+            if (loginData is null)
+                return NotFound();
+            _unitOfWork.Context.LoginDatas.Remove(loginData);
+            var sharedLoginData = _unitOfWork.Context.SharedLoginsData.FirstOrDefault(x => x.LoginDataId == id);
+            if(sharedLoginData!=null)
+                _unitOfWork.Context.SharedLoginsData.Remove(sharedLoginData);
+            _unitOfWork.SaveChanges();
+            return NoContent();
+        }
+
+
 
 
 

@@ -101,12 +101,19 @@ namespace PasswordManagerAppResourceServer
             services.AddControllers();
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 			
+          /*
 			services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlite(Configuration.GetConnectionString("SqliteConnection")));
-			
-			// Scoped services ->
-			
-			services.AddScoped<IUnitOfWork, UnitOfWork>();
+          */
+            //  MySql Database
+            services.AddDbContext<ApplicationDbContext>(options =>
+                       options.UseMySql(Configuration.GetConnectionString("MysqlConnection")));
+
+         
+
+            // Scoped services ->
+
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEmailSender, EmailSender>();
             services.AddScoped<EncryptionService>();

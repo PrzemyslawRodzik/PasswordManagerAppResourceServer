@@ -1,4 +1,5 @@
 ﻿using System;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace PasswordManagerAppResourceServer.Migrations
@@ -12,7 +13,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     email = table.Column<string>(nullable: false),
                     master_password = table.Column<string>(nullable: false),
                     compromised = table.Column<int>(nullable: false),
@@ -31,7 +32,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     browser = table.Column<string>(nullable: false),
                     operating_system = table.Column<string>(nullable: false),
                     country = table.Column<string>(nullable: false),
@@ -47,7 +48,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     user_id = table.Column<int>(nullable: true),
                     name = table.Column<string>(nullable: false),
                     cardholder_name = table.Column<string>(nullable: false),
@@ -71,7 +72,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     user_id = table.Column<int>(nullable: true),
                     name = table.Column<string>(nullable: false),
                     email = table.Column<string>(nullable: true),
@@ -98,7 +99,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     user_id = table.Column<int>(nullable: true),
                     Name = table.Column<string>(nullable: false),
                     Details = table.Column<string>(nullable: false)
@@ -119,7 +120,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     user_id = table.Column<int>(nullable: true),
                     name = table.Column<string>(nullable: false),
                     email = table.Column<string>(nullable: false),
@@ -143,7 +144,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     user_id = table.Column<int>(nullable: true),
                     name = table.Column<string>(nullable: true),
                     second_name = table.Column<string>(nullable: true),
@@ -166,7 +167,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     user_id = table.Column<int>(nullable: true),
                     token = table.Column<string>(nullable: false),
                     create_date = table.Column<DateTime>(nullable: false),
@@ -188,7 +189,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     user_id = table.Column<int>(nullable: true),
                     device_guid = table.Column<string>(nullable: false),
                     ip_address = table.Column<string>(nullable: false),
@@ -210,7 +211,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     user_id = table.Column<int>(nullable: true),
                     login_data_id = table.Column<int>(nullable: false),
                     start_date = table.Column<DateTime>(nullable: false),
@@ -238,7 +239,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     personal_info_id = table.Column<int>(nullable: false),
                     address_name = table.Column<string>(nullable: false),
                     street = table.Column<string>(nullable: false),
@@ -262,7 +263,7 @@ namespace PasswordManagerAppResourceServer.Migrations
                 columns: table => new
                 {
                     Id = table.Column<int>(nullable: false)
-                        .Annotation("Sqlite:Autoincrement", true),
+                        .Annotation("MySql:ValueGenerationStrategy", MySqlValueGenerationStrategy.IdentityColumn),
                     personal_info_id = table.Column<int>(nullable: false),
                     nickname = table.Column<string>(nullable: false),
                     phone_number = table.Column<string>(nullable: false),

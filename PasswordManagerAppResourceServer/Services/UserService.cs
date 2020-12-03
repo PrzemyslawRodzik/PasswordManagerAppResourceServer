@@ -76,7 +76,7 @@ namespace PasswordManagerAppResourceServer.Services
                 PasswordSalt = Convert.ToBase64String(passwordSalt),
                 TwoFactorAuthorization = 0,
                 PasswordNotifications = 1,
-                AuthenticationTime = 5,
+                AuthenticationTime = 25,
             };
             _unitOfWork.Users.Add<User>(user);
             _unitOfWork.SaveChanges();
@@ -545,7 +545,7 @@ namespace PasswordManagerAppResourceServer.Services
                 algorithm: SecurityAlgorithms.RsaSha256
             );
             var cryptoKey = new EncryptingCredentials(symmetricSecurityKey, SecurityAlgorithms.Aes256KW, SecurityAlgorithms.Aes256CbcHmacSha512);
-            var expirationDate = DateTime.UtcNow.AddMinutes(user.AuthenticationTime != 0 ? user.AuthenticationTime : 5);
+            var expirationDate = DateTime.UtcNow.AddMinutes(user.AuthenticationTime != 0 ? user.AuthenticationTime : 25);
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(new List<Claim>
