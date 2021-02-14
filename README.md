@@ -47,14 +47,7 @@ dotnet run
 
 ![web vault](https://i.ibb.co/Gsx518L/image.png)
 * Configure [XamarinPasswordManagerApp](https://github.com/PrzemyslawRodzik/XamarinPasswordManagerApp) to save your passwords in mobile application
-<p align="left">
-   
-   <img src="https://i.ibb.co/NFKscdV/Screenshot-2020-11-23-14-03-24-82-bd6d1f84847f3f89a5743be6b0969a04.jpg" alt="details" width="320" >
-   </p>
 
-<p align="right">
-<img src="https://i.ibb.co/tX0hdqx/Screenshot-1606384025.png" alt="sharedloginsmobile" width="320"  >
- </p>
 
 
 
