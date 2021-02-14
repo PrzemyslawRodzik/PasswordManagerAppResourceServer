@@ -18,7 +18,7 @@ The server project is written in C# using .NET Core 3.1 with ASP.NET Core. The a
 
 ## Configuration
  You can customize MySQL database and email credentials in *appsettings.json* file. </br>
- Moreover you are able to change database to sqlite. To do so you'll need to comment line with mysql, then uncomment sqlite line.
+ Moreover you are able to change database to sqlite. To do so you'll need to comment line with mysql, then uncomment sqlite line. </br>
 <img src="https://i.ibb.co/6mMgdzY/image.png" alt="mobileVault" title="mobile vault" width="548"/>
  
  ---
