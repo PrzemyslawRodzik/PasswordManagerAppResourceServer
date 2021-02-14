@@ -46,7 +46,9 @@ dotnet run
 
 * Configure [PasswordManagerApp](https://github.com/PrzemyslawRodzik/PasswordManagerApp) to store your data in web vault
 
-![web vault](https://i.ibb.co/Gsx518L/image.png)
+<p align="center">
+<img src="https://i.ibb.co/tpzSVRH/finalgif.gif" alt="finalgif" >
+</p>
 * Configure [XamarinPasswordManagerApp](https://github.com/PrzemyslawRodzik/XamarinPasswordManagerApp) to save your passwords in mobile application
 
 
