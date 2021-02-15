@@ -49,6 +49,7 @@ dotnet run
 <p align="center">
 <img src="https://i.ibb.co/tpzSVRH/finalgif.gif" alt="finalgif" >
 </p>
+
 * Configure [XamarinPasswordManagerApp](https://github.com/PrzemyslawRodzik/XamarinPasswordManagerApp) to save your passwords in mobile application
 
 
