@@ -9,14 +9,11 @@ using System.Text;
 namespace PasswordManagerAppResourceServer.Services
 {
 
-    public class EncryptionService
+    public class EncryptionService:IEncryptionService
     {
         
 
-        public EncryptionService()
-        {
-            
-        }
+       
         
         public string Encrypt(string password, string data) 
         {
@@ -51,14 +48,10 @@ namespace PasswordManagerAppResourceServer.Services
 
     }
 
-
-
-
-    
-
-    
-
-
-    
+    public interface IEncryptionService
+    {
+        string Encrypt(string password, string data);
+        string Decrypt(string password, string encData);
+    }
 }
 

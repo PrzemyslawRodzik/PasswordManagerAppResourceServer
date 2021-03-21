@@ -103,7 +103,7 @@ namespace PasswordManagerAppResourceServer.Controllers
             if (!_userService.VerifyPasswordHash(model.Password, Convert.FromBase64String(authUser.Password), Convert.FromBase64String(authUser.PasswordSalt)))
                 throw new AuthenticationException("Password is incorrect.");
             
-            // odszyfrowac starym  i zaszyfrowac nowym haslem
+            
             
             var isSuccess = _userService.ChangeMasterPassword(model.Password,model.NewPassword, GetUserIdFromJwtToken().ToString());
             return Ok(new ApiResponse

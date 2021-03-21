@@ -35,7 +35,7 @@ namespace PasswordManagerAppResourceServer.Data
         public bool IsTokenActive(User authUser)
         {
             var currentTime = DateTime.UtcNow;
-            bool isActive = ApplicationDbContext.Totp_Users.Any(x => x.UserId == authUser.Id && x.Expire_date > currentTime);
+            bool isActive = ApplicationDbContext.Totp_Users.Any(x => x.UserId == authUser.Id && x.Expire_date >= currentTime);
 
             if (isActive)
                 return true;

@@ -11,7 +11,7 @@ namespace PasswordManagerAppResourceServer.Interfaces
         IUserRepository Users { get; }
         IWalletRepository Wallet { get; }
 
-        
+
         ApplicationDbContext Context { get; }
 
         

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace PasswordManagerAppResourceServer.Handlers
 {
-    class AESHelper
+    public class AESHelper
     {
         
         public static string EncryptAES(string plainText, byte[] Key)

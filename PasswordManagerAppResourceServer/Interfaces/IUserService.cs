@@ -29,6 +29,7 @@ namespace PasswordManagerAppResourceServer.Services
         bool DeleteUser(int id);
         void SendTotpToken(User authUser);
         int VerifyTotpToken(User authUser, string token);
+        string GenerateTotpToken(User authUser);
 
         Task<User> AuthenticateExternal(string id);
         Task<User> AddExternal(string id, string email);
@@ -37,6 +38,7 @@ namespace PasswordManagerAppResourceServer.Services
 
 
           bool VerifyPasswordHash(string password, byte[] storedHash, byte[] storedSalt);
+        void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt);
 
           void InformUserAboutOldPasswords(int userId);
           void InformAllUsersAboutOldPasswords();

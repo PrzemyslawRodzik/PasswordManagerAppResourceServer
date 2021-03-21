@@ -42,14 +42,14 @@ namespace PasswordManagerAppResourceServer.Services
         public DataProtectionHelper dataProtectionHelper;
         
         private readonly IConfiguration _config;
-        private readonly EncryptionService _encryptService;
+        private readonly IEncryptionService _encryptService;
         private readonly IEmailSender _emailSender;
-        
 
         
+        
 
 
-        public UserService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IDataProtectionProvider provider,IEmailSender emailSender, IConfiguration config, EncryptionService encryptService)
+        public UserService(IUnitOfWork unitOfWork, IHttpContextAccessor httpContextAccessor, IDataProtectionProvider provider,IEmailSender emailSender, IConfiguration config, IEncryptionService encryptService)
         {
             _unitOfWork = unitOfWork;
             _httpContextAccessor = httpContextAccessor;  
@@ -268,7 +268,7 @@ namespace PasswordManagerAppResourceServer.Services
         
 
 
-        private  void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+        public  void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             if (password == null) throw new UserServiceException("Password is null");
             if (string.IsNullOrWhiteSpace(password)) throw new UserServiceException("Value cannot be empty or whitespace only string.");
@@ -280,7 +280,7 @@ namespace PasswordManagerAppResourceServer.Services
             }
         }
         
-        private string GenerateTotpToken(User authUser)
+        public string GenerateTotpToken(User authUser)
         {   string totpToken;
             string sysKey = _config["TotpKey"];
             var key_b = Encoding.UTF8.GetBytes(sysKey + authUser.Email);

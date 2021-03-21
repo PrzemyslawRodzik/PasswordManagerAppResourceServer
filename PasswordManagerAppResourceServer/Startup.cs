@@ -116,7 +116,7 @@ namespace PasswordManagerAppResourceServer
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IEmailSender, EmailSender>();
-            services.AddScoped<EncryptionService>();
+            services.AddScoped<IEncryptionService,EncryptionService>();
 
         }
 
